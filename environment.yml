@@ -1,0 +1,28 @@
+# You can use this file to create a conda environment for this pipeline:
+#   conda env create -f environment.yml
+name: hla-pipe-1.0
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - r=3.5.1
+  - r-base=3.5.1
+  - r-reshape
+  - r-reshape2
+  - r-ggplot2
+  - r-r.utils
+  - bioconductor-hibag
+  - bioconductor-snprelate
+  - r-gridextra
+  - r-gridbase
+  - plink=1.90b6.12
+  - beagle=5.1_24Aug19.3e8
+  - r-rmarkdown
+  - r-knitr
+  - cairo
+  - r-cairo
+  - pandoc
+  - r-bookdown
+  - mscorefonts
+  - r-data.table 

@@ -1,0 +1,243 @@
+---
+title: "HLA imputation report"
+author: "Mareike Wendorff & Frauke Degenhardt"
+date: "`r Sys.Date()`"
+output: 
+  bookdown::html_document2:
+    citation_package: natbib
+    fig_width: 4 
+    fig_height: 4
+    number_sections: true
+    fig_caption: true
+    toc: true
+editor_options:
+  chunk_output_type: console
+bibliography: bib/bibtex.bib
+link-citations: yes
+
+params:
+  checked_name : "test"
+  rootname : "test"
+  pop : "African American"
+  model: "multiethnic_IKMB.RData"
+  shapeit: "no shapeit"
+  modules: "no modules"
+  liftover: "no liftover"
+  assembly: "assembly"
+  basenamerunname: "test"
+header-includes:
+   - \usepackage[english]{babel}
+   - \usepackage{hyperref}
+   - \usepackage{caption}
+---
+\fontsize{10}{15}
+\selectfont
+
+
+```{r style, echo = F, results="asis", cache=FALSE, message = F}
+# Set knit global options
+library("knitr")
+library("rmarkdown")
+
+library("ggplot2")
+options(digits = 2, width = 80)
+golden_ratio <- (1 + sqrt(5)) / 2
+opts_chunk$set(echo = TRUE,
+               tidy = FALSE,
+               include = TRUE,
+               fig.width=5, 
+               fig.height=5,
+               out.width="70%",
+               cache = FALSE)
+
+opts_knit$set(eval.after = "fig.cap")
+
+model = gsub(".*models/", "", params$model)
+pop = params$pop
+options(stringsAsFactors=F)
+
+set.seed(13)
+
+
+
+```
+# Abstract
+
+This summary gives an overview of the steps taken during the imputation of specified HLA with HIBAG [@Zheng2014]. Scripts used in this pipeline were used in
+- Degenhardt F *et al.*, Trans-ethnic analysis of the human leukocyte antigen region for ulcerative colitis reveals common disease signatures; currently under revision in the the American Journal of Human Genetics, (2020).
+If you used a reference provided by the IKMB, please also cite [@Degenhardt2019] as follows:
+- Degenhardt F, Mareike Wendorff *et al.*, "Construction and benchmarking of a multi-ethnic reference panel for the imputation of HLA class I and II alleles", *HMG*, (2019).
+
+# Data Summary
+
+```{r summary files get, echo = F, results="hide", cache=FALSE, message = F}
+bim = read.table(paste0(params$rootname,".bim"), h=F, col.names=c("CHR","","","POS","",""))
+SAMPLES = nrow(read.table(paste0(params$rootname, ".fam"), h=F))
+SNPS = tapply(bim$POS,bim$CHR,length)
+SNPS = cbind(names(SNPS), unlist(SNPS))
+colnames(SNPS) = c("CHR","#SNPS")
+NSNPS = nrow(bim)
+isliftover = params$liftover == paste0("unmappedCHR_",params$basenamerunname,".txt")
+```
+
+
+<!-- liftover performed --> 
+```{r liftoverRef, results='asis', eval=isliftover, include=isliftover, echo=FALSE, }
+cat("# Liftover  from ", params$assembly, " to hg19 was performed\n")
+```
+```{asis, eval=isliftover, include=isliftover, echo=T, }
+We used liftOver [@Hinrichs2006] with the chainfile
+```
+```{r liftoverChain, results='asis', eval=isliftover, include=isliftover, echo=FALSE, }
+cat(params$assembly,"ToHg19.over.chain.gz",sep="")
+```
+
+```{r, eval=isliftover, echo =F, tidy=T}  
+failedLiftOver = read.table(params$liftover,h=T)
+#colnames(failedLiftOver)[1]="CHR"
+```  
+
+
+```{r, eval=isliftover, echo =F, tidy=T}
+# Number of variants that could not be lifted per chromosome (a detailed list can be found in unmappedSNPs.txt)
+kable(failedLiftOver,row.names=F,caption = "Number of variants that could not be lifted per chromosome (a detailed list can be found in unmappedSNPs.txt)")
+```
+
+
+\pagebreak
+# Pre imputation alignment checks
+## Model used
+```{r refcheck info alt, echo = any(grep("IKMB", model)),  results="markup", eval = any(grep("IKMB", model)),cache=FALSE, message = F}
+# ALIGNMENT TO MODEL
+model
+# POPULATION
+pop
+```
+
+```{r refcheck info, echo = !any(grep("IKMB", model)),  results="markup", eval = !any(grep("IKMB", model)),  cache=FALSE, message = F}
+# ALIGNMENT TO MODEL
+model
+
+```
+## Alignment of input data to reference
+```{r figure9, echo = F,  results="markup", cache=FALSE, message = F, fig.cap=c("Alignment cohort to reference BEFORE and AFTER SNPs were excluded or flipped.","%-available SNPS used in the panel per locus."), fig.pos="!ht"}
+ include_graphics(paste0("refchecked_A_",params$basenamerunname,".png"))
+ include_graphics(paste0("refchecked_B_",params$basenamerunname,".png"))
+```
+
+
+## SNPs excluded
+- We flipped non--ATCG SNPs of the input data set that had identical (but reverse) alleles compared to the reference (flipped).
+- We excluded non--ATCG variants of the supplied dataset, that did not match the alleles of the reference data (e.g. A/C in your dataset vs. A/T in the reference model) (excluded). 
+- We excluded an ATCG variant (+--strand annotation of input dataset assumed) that deviated in its frequency more than a value of 0.2 from the frequency of the ATCG variant stored on the reference model. We additionally excluded all ATCG variants that had a frequency around 40\% in the input dataset or the reference model. Excluded SNPs were written to `r params$checked_name`.summary.refchecked.txt. Number of changes made are printed below. 
+- For all non--ATCG and ATCG SNPs that did not fall into the above categories, we performed no action (no action). See below for info on what happend to the SNPs.
+
+
+```{r summary refcheck map get, echo = F, results="markup", cache=FALSE, message = F}
+SNPReport= as.matrix(read.table(paste0("report_refchecked_",params$basenamerunname,".txt"), h=T,sep=","))
+SNPReport[1,1] ="no action"
+SNPReport[3,1] ="excluded"
+```
+
+```{r, echo = F, results="markup", cache=FALSE, message = F}
+# summary refcheck map put
+kable(SNPReport,caption = "SNP report")
+```
+
+
+# Post imputation data overview 
+- Data were imputed using `r model` and results were written as an R--Object file to imputation_`r params$checked_name`.RData and additionally to a CSV file named impuation_`r params$checked_name`.csv
+- The posterior probabilitites of both alleles per locus and individual are stored in the RData--Object.
+- Marginal probabilities for each allele were calculated conditional on the alleles imputed for the individuals of the dataset and written together with allele frequencies to marginal_prob_`r params$checked_name`.txt and are given in a 2--field notation and a 4--field notation. 
+- Phasing was conducted using SHAPEIT2 [@Delaneau2011] and HIBAG [@Zheng2014] (Degenhardt *et al.*, under review). For this step we exclude SNPS missing for all individuals. Phasing certainty is given from 0 to 1. We suggest a threshold of 0.8 and results are written to `r params$checked_name`.all.phased.txt. Phasing was not conducted for HLA-*DRB3/4/5*, since these loci are generally difficult to phase. Please refer to the Supplementary Tables of [@Degenhardt2019] for information on which HLA-*DRB1* generally occured with wich HLA-*DRB3/4/5* in this study.
+\pagebreak
+
+## Posterior probability distribution
+
+
+```{r figure11, echo = F,  results="markup", cache=FALSE, message = F, fig.cap="The posterior probability for the different loci is a measurement given by HIBAG [@Zheng2014] about the certainty that a specific prediction is correct.", fig.pos="!ht"}
+include_graphics(paste0("postprob_",params$basenamerunname,".png"))
+```
+
+## Per allele marginal posterior probability
+
+```{r figure12, echo = F,  results="markup", cache=FALSE, message = F, fig.cap="The marginal posterior probability for each allele per locus.", fig.pos="!ht"}
+include_graphics(paste0("unsure_",params$basenamerunname,".png"))
+```
+  
+
+```{r get MP, echo = F,  results="hide", cache=FALSE, message = F}
+res = data.frame(read.table(paste0("marginal_prob_",params$checked_name,".txt"), h=T))
+```
+
+### Alleles with marginal posterior probability < 0.8
+
+Also refer to the Supplementary Tables in [@Degenhardt2019] to look up which alleles are generally difficult to impute.
+
+```{r, echo = F,  results="markup", cache=FALSE, message = F}
+kable(res[res$prob < 0.8 & res$freq >= 0.01,],digits = 3, caption = "Alleles with a marginal posterior probability < 0.8 and an allele frequency over 1%")# format.args = list(scientific = TRUE),
+```
+
+\pagebreak
+
+## Phasing
+
+
+```{r figure13, echo = F,  results="markup", cache=FALSE, message = F, fig.cap="Phasing certainty across the loci.", fig.pos="!ht"}
+include_graphics(paste0("phased_",params$basenamerunname,".png"))
+```
+
+## SessionInfo
+```{r sessioninfo, echo = F,  results="hide", cache=FALSE, message = F}
+
+library(parallel)
+library(ggplot2)
+library(data.table)
+library(reshape)
+library(HIBAG)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+
+
+```
+
+```{r sessioninfo out, echo = TRUE,  results="markup", cache=FALSE, message = F}
+sessionInfo()
+
+```
+
+
+## Software
+
+### CLUSTER MODULES
+
+```{r, echo =F, results="markup"}
+unlist(strsplit(params$modules, ":"))
+``` 
+
+### SHAPEIT
+```{r, echo =F, results="markup"}
+Sys.setenv(SHAPEIT=params$shapeit)                                                                                       
+```      
+```{bash, echo =F, results="markup"}
+$SHAPEIT --version
+```
+
+### PLINK
+```{bash, echo =F, results="markup"}      
+plink --version                                                                                                                             
+```  
+### FLASHPCA
+```{bash, echo =F, results="markup"} 
+flashpca --version
+```
+
+### Liftover 
+```{asis, results="markup", eval=isliftover, include=isliftover, echo=TRUE, tidy=TRUE} 
+The LiftOver was downloaded from "https://genome-store.ucsc.edu/", please cite [@Hinrichs2006].
+```
+```{noliftover_info, results="markup", eval=!isliftover, include=!isliftover, echo=TRUE, tidy=TRUE} 
+LiftOver was not used.
+```
+# References
