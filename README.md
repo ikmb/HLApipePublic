@@ -84,8 +84,8 @@ Software/References: \
 
 Others: \
 
--```--email```         Email address to send reports to (enclosed in '')
--```--outdir```        Path to output directory. Default: results.
+```--email```         Email address to send reports to (enclosed in '') \
+```--outdir```        Path to output directory. Default: results.
 
 
 ## HLA reference panels
