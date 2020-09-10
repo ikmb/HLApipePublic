@@ -61,26 +61,26 @@ Usage:  nextflow run HLApipePublic --prefix FILE --reference_name REFERENCE --ru
 ```
 ## Parameters
 
--```--prefix```		An input prefix referencing a set of PLINK files
+```--prefix```		An input prefix referencing a set of PLINK files \
 
--```--reference_name``` 	Name of the reference imputation panel (see below for details)
+```--reference_name``` 	Name of the reference imputation panel (see below for details) 
 
 ## Optional parameters:
 
 General: 
 
--```--assembly```  	Build of your data (default hg19; also supported hg18, data are then lifted)
--```--loci```     	Loci that should be imputed. Default: As specified in conf/resources.config.
+```--assembly```  	Build of your data (default hg19; also supported hg18, data are then lifted) \
+```--loci```     	Loci that should be imputed. Default: As specified in conf/resources.config.
 
 
 Software/References: 
--```--shapeit```		Path to the SHAPEIT2 executable.
--```--impute2_ref_dir``` Path to the IMPUTE2 reference.
--```--beagle```        Location of the .jar file of BEAGLE4.1.
--```--do_beagle```    	This flag is optional and enables phasing using Beagle. Default: false
--```--ref_1000G ```    Path to population used for PCA. PLINK files (hg19). Default: 1000G Phase 3 population.
--```--sample```	Path to sample file used for PCA. Default: 1000G Phase 3 population.
--```--subpop```    	Name of a sub population to use. Valid options are: AA, AFR, AMR, CHN, EAS, EUR, GER, IND, IRN, JPN, KOR, MLT. Can be used together with the IKMB reference.
+```--shapeit```		Path to the SHAPEIT2 executable. \
+```--impute2_ref_dir``` Path to the IMPUTE2 reference. \
+```--beagle```        Location of the .jar file of BEAGLE4.1. \
+```--do_beagle```    	This flag is optional and enables phasing using Beagle. Default: false. \
+```--ref_1000G ```    Path to population used for PCA. PLINK files (hg19). Default: 1000G Phase 3 population. \
+```--sample```	Path to sample file used for PCA. Default: 1000G Phase 3 population. \
+```--subpop```    	Name of a sub population to use. Valid options are: AA, AFR, AMR, CHN, EAS, EUR, GER, IND, IRN, JPN, KOR, MLT. Can be used together with the IKMB reference.
 
 Others: 
 
