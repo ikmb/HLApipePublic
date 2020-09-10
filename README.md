@@ -29,7 +29,7 @@ The result is a .pdf File that informs on the general steps performed in the wor
 
 ## Installation
 
-Change the following lines in the files
+Change the following lines in the files to fit your requirements: 
 
 nextflow.config:
 
@@ -38,6 +38,7 @@ params.impute2_reference_dir = /path/to/impute2/reference/files
 params.ref_1000G =  /path/to/1000G/.bim/.bed/.fam annotation
 params.shapeit = /path/to/shapeit2/executable
 ```
+
 ```
 params {
   // Defaults only, expecting to be overwritten
@@ -73,18 +74,18 @@ General:
 
 
 Software/References: 
---shapeit	Path to the SHAPEIT2 executable.
---impute2_ref_dir Path to the IMPUTE2 reference.
---beagle        Location of the .jar file of BEAGLE4.1.
---do_beagle    	This flag is optional and enables phasing using Beagle. Default: false
---ref_1000G     Path to population used for PCA. PLINK files (hg19). Default: 1000G Phase 3 population.
---sample	Path to sample file used for PCA. Default: 1000G Phase 3 population.
---subpop    	Name of a sub population to use. Valid options are: AA, AFR, AMR, CHN, EAS, EUR, GER, IND, IRN, JPN, KOR, MLT. Can be used together with the IKMB reference.
+```--shapeit```		Path to the SHAPEIT2 executable.
+```--impute2_ref_dir``` Path to the IMPUTE2 reference.
+```--beagle```        Location of the .jar file of BEAGLE4.1.
+```--do_beagle```    	This flag is optional and enables phasing using Beagle. Default: false
+```--ref_1000G ```    Path to population used for PCA. PLINK files (hg19). Default: 1000G Phase 3 population.
+```--sample```	Path to sample file used for PCA. Default: 1000G Phase 3 population.
+```--subpop```    	Name of a sub population to use. Valid options are: AA, AFR, AMR, CHN, EAS, EUR, GER, IND, IRN, JPN, KOR, MLT. Can be used together with the IKMB reference.
 
 Others: 
 
---email         Email address to send reports to (enclosed in '')
---outdir        Path to output directory. Default: results.
+```--email```         Email address to send reports to (enclosed in '')
+```--outdir```        Path to output directory. Default: results.
 
 
 ## HLA reference panels
@@ -97,8 +98,6 @@ To add a reference make an entry into the conf/resources.config
 ```
 	'IKMB' {
 		model = "${baseDir}/assets/models/multiethnic_IKMB/model_multiethnic.RData"
-		sample = "${baseDir}/assets/samples/multiethnic_IKMB.cluster"
-		frqs = "${baseDir}/assets/frequencies/multiethnic_IKMB.frq"
 		loci = ["A","B","C","DRB1","DQA1","DQB1","DPA1","DPB1","DRB3","DRB4","DRB5"]
 	}
   
