@@ -22,7 +22,7 @@ helpMessage = """
 ===============================================================================
 IKMB HLA pipeline | version ${params.version}
 ===============================================================================
-Usage:  nextflow run HLApipe --prefix FILE --reference_name REFERENCE --run_name NAME--shapeit SHAPEIT --impute2_reference_dir IMPUTE2_REF_DIR 
+Usage:  nextflow run HLApipePublic --prefix FILE --reference_name REFERENCE --run_name NAME--shapeit SHAPEIT --impute2_reference_dir IMPUTE2_REF_DIR 
 
 
 --prefix		An input prefix referencing a set of PLINK files
@@ -94,7 +94,7 @@ params.do_beagle = false
 params.assembly = "hg19"
 params.loci = false
 params.dict = false
-params.subpop ="EUR"
+params.subpop =""
 params.frqs=""
 
 // *****************************
@@ -142,7 +142,7 @@ if (!params.sample){
 
 
 
-if (!params.valid_pops.contains(params.subpop)  && (params.reference_name == "IKMB" || params.reference_name == "IKMB_g" || params.reference_name == "IKMB_1KG") ) {
+if (!params.valid_pops.contains(params.subpop) && params.subpop!=""  && (params.reference_name == "IKMB" || params.reference_name == "IKMB_g" || params.reference_name == "IKMB_1KG") ) {
 	exit 1, "Requested for an unknown subpopulation to be analysed (--subpop)"
 }
 if (params.subpop &&  !(params.reference_name== "IKMB" || params.reference_name == "IKMB_g" || params.reference_name == "IKMB_1KG") ) {
@@ -315,7 +315,7 @@ process readData {
 
 	
 	"""
-		check_build.R ${params.ref_1000G} $prefix
+#		check_build.R ${params.ref_1000G} $prefix
 		duplicates.R $prefix
 		plink --bfile $prefix --exclude exclude_duplicates.txt --make-bed --out $base_name_qc
 

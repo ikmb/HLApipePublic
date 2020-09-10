@@ -64,7 +64,7 @@ assign.HLA=function(data, fam, position){
     dos=rbind(dos,tmp)
   }
   dos = dos[,match(fam$IID,colnames(dos))]
-  print(rownames(dos))
+
   position$mid = position$start+ceiling((position$end -position$start+1)/2)
   
   out = cbind(chr=6, id=paste0("imputed_HLA_", rownames(dos)),
@@ -85,26 +85,29 @@ assign.SNP.PROT_prepare=function(data, info, fam, type){
      out= c()
     for(i in 1:nrow(all)){
       locus=all[i,"locus"]
-      if(locus%in%c("DRB1","DRB3","DRB3","DRB5")){
+      if(locus%in%c("DRB1","DRB3","DRB4","DRB5")){
         lib_loc = "DRB"
       }else{
         lib_loc=locus
       }
       gen = paste(locus,"*",as.character(all[i,c("A","B")]),sep="")
+      gen = gsub("G", "", gen)
       lib = info[[paste(lib_loc,"_",type,sep="")]]
       colnames(lib)=paste(locus,"_",colnames(lib),sep="")
-      rownames(lib)=gsub("[NLQE]$","", rownames(lib)) # Only because gsubed in source
+      rownames(lib)=gsub("[NLQEG]$","", rownames(lib)) # Only because gsubed in source
       if(any(!gen%in%rownames(lib))){
         tmp = lib
-        if(!gen[1]%in%rownames(lib)){
+        if(!gen[1]%in%rownames(tmp)){
           tmp= rbind(tmp, rep(0, ncol(tmp)))
           rownames(tmp)[nrow(tmp)] = gen[1]
+          print(paste(x, "Missing", gen[1]))
         }
-        if(!gen[2]%in%rownames(lib)){
+        if(!gen[2]%in%rownames(tmp)){
           tmp= rbind(tmp, rep(0, ncol(tmp)))
           rownames(tmp)[nrow(tmp)] = gen[2]
+           print(paste(x, "Missing", gen[2]))
         }
-        print(paste(x, "Missing", gen))
+       # print(paste(x, "Missing", gen))
 
         out = cbind(out, as.matrix(tmp[gen,]))
       }else{
@@ -122,6 +125,7 @@ assign.SNP.PROT_prepare=function(data, info, fam, type){
     return(out)}, mc.cores=detectCores(), mc.preschedule=F, mc.silent=F)
   
   out = do.call(rbind,out)
+
   if(type=="nuc"){
     out = out[,order(as.numeric(gsub(".*_|I","",colnames(out))))]
     out=  out[,as.numeric(gsub(".*_|I","",colnames(out)))>=25*10^6]  
@@ -147,7 +151,7 @@ assign.SNP.PROT=function(tmp){
   row.names=tmp[,1]
   
   tmp = tmp[,-(1:2)]
-  print(head(tmp))
+  print(head(tmp)[,1:10])
   ###################################
   # Get the major and minor allele
   ##################################
@@ -171,10 +175,8 @@ assign.SNP.PROT=function(tmp){
   
   
   maj=t(maj)
-  print("HERE")
- 
+  
   rownames(maj) =row.names
-  print("HERE2")
   
   ##################################
   # Calculate dosage on minor allele
@@ -258,12 +260,15 @@ data$B.name = unlist(sapply(strsplit(data$B.name, ":"), function(x){x=paste(x[1]
 print(head(data))
 
 load(args[4])
-if(any(-grep("DRB[345]", data$A.name))){
-  data = data[-grep("DRB[345]", data$A.name),]
+if(any(-grep("E", data$A.name))){
+  data = data[-grep("E", data$A.name),]
 }
 
 
+
+
 out = assign.SNP.PROT_prepare(data, nuc2dig, fam, "nuc")
+
 out = assign.SNP.PROT(out)
 NUC=out
 write.table(out, paste("imputation_",args[2],".nuc.data", sep=""), quote=F, sep="\t", row.names=F)

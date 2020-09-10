@@ -14,7 +14,6 @@ editor_options:
   chunk_output_type: console
 bibliography: bib/bibtex.bib
 link-citations: yes
-
 params:
   checked_name : "test"
   rootname : "test"
@@ -228,10 +227,7 @@ $SHAPEIT --version
 ```{bash, echo =F, results="markup"}      
 plink --version                                                                                                                             
 ```  
-### FLASHPCA
-```{bash, echo =F, results="markup"} 
-flashpca --version
-```
+
 
 ### Liftover 
 ```{asis, results="markup", eval=isliftover, include=isliftover, echo=TRUE, tidy=TRUE} 
