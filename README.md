@@ -57,11 +57,11 @@ params {
 # Usage
 
 ## Basic execution
-
+```
 Usage:  nextflow run HLApipePublic --prefix FILE --reference_name REFERENCE --run_name NAME--shapeit SHAPEIT --impute2_reference_dir IMPUTE2_REF_DIR 
+```
 
-
---prefix		An input prefix referencing a set of PLINK files
+```--prefix```		An input prefix referencing a set of PLINK files
 --reference_name 	Name of the reference imputation panel (see below for details)
 
 Optional parameters:
