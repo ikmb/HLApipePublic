@@ -13,7 +13,7 @@ This pipeline offers a workflow for HLA imputation and phasing for small dataset
 
 For genome-wide datasets general QC statistics are also calculated.
 
-The result is a .pdf File that informs on the general steps performed in the workflow as well as imputed and phased HLA alleles. 
+The result is a .pdf file that informs on the general steps performed in the workflow as well as imputed and phased HLA alleles. 
 
 ## Dependencies 
 
