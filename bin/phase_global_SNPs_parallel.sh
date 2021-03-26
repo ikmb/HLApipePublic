@@ -76,9 +76,8 @@ $SHAPEIT \
 --input-map $REFERENCE_DIR_IMPUTE2/genetic_map_chr6"_combined_b37.txt" \
 --input-thr 0.9 \
 --missing-code 0 \
---force \
---states 400 \
---window 0.5 \
+--states 100 \
+--window 2 \
 --effective-size 18000 \
 --burn 7 \
 --prune 8 \
@@ -94,6 +93,7 @@ else
 cat $name*.strand | awk '{print $4}' |sort| uniq> $name.exclude
 plink --bfile $name --exclude  $name.exclude --make-bed --out $name
 
+
 $SHAPEIT \
 --input-ref  $REFERENCE_DIR_IMPUTE2/1000GP_Phase3_chr6.hap.gz  $REFERENCE_DIR_IMPUTE2/1000GP_Phase3_chr6.legend.gz  $REFERENCE_DIR_IMPUTE2/1000GP_Phase3.sample \
 --input-bed $name \
@@ -101,8 +101,8 @@ $SHAPEIT \
 --input-thr 0.9 \
 --missing-code 0 \
 --force \
---states 400 \
---window 0.5 \
+--states 100 \
+--window 2 \
 --effective-size 18000 \
 --burn 7 \
 --prune 8 \
@@ -112,8 +112,8 @@ $SHAPEIT \
 --thread $CPUS \
 --output-log $name.hgraph
 
-fi
 
+fi
 #######################
 # Phasing certainty
 #######################
@@ -138,11 +138,6 @@ $SHAPEIT -convert \
 --input-graph $name.hgraph  \
 --output-max $name \
 --output-log $name.convert
-
-#	compress
-gzip $name.hgraph
-gzip $name.haps
-gzip $name.sample
 
 
 

@@ -35,7 +35,7 @@ save(args, file="args.RData")
 print(args)
 
 print(paste("Reading phased data",haps))
-phased = read.table(gzfile(haps), h=F)
+phased = read.table(haps, h=F)
 samples = read.table(gzfile(sample),h=T)
 
 print(paste("Reading certainty data",certainty))

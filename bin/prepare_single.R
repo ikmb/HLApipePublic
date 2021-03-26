@@ -151,7 +151,7 @@ assign.SNP.PROT=function(tmp){
   row.names=tmp[,1]
   
   tmp = tmp[,-(1:2)]
-  print(head(tmp)[,1:10])
+#  print(head(tmp)[,1:10])
   ###################################
   # Get the major and minor allele
   ##################################
