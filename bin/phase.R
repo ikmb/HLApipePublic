@@ -36,7 +36,7 @@ print(args)
 
 print(paste("Reading phased data",haps))
 phased = read.table(haps, h=F)
-samples = read.table(gzfile(sample),h=T)
+samples = read.table(sample,h=T)
 
 print(paste("Reading certainty data",certainty))
 certainty = read.table(certainty, h=T, sep="\t")
