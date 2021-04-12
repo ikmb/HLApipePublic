@@ -509,13 +509,13 @@ process phaseSNPs {
 	script:
 	prefix = bed.getBaseName()
         val_chunk = fam_chunk.toString().replaceAll(/.*\//,"")
-	haps = checked_name + "." + val_chunk + ".haps"
-	sample = checked_name + "." + val_chunk + ".sample"
-	correlation = checked_name + "." + val_chunk + ".certainty.all"
-	phased_name_val = checked_name + "." + val_chunk
+	haps = checked_name + "_" + val_chunk + ".haps"
+	sample = checked_name + "_" + val_chunk + ".sample"
+	correlation = checked_name + "_" + val_chunk + ".certainty.all"
+	phased_name_val = checked_name + "_" + val_chunk
         """                  
-		plink --bfile ${prefix} --keep ${fam_chunk} --geno 0.05 --make-bed --out ${checked_name}.${val_chunk}
-		phase_global_SNPs_parallel.sh ${checked_name}.${val_chunk} ${params.shapeit} ${params.impute2_reference_dir} ${task.cpus}
+		plink --bfile ${prefix} --keep ${fam_chunk} --geno 0.05 --make-bed --out ${checked_name}"_"${val_chunk}
+		phase_global_SNPs_parallel.sh ${checked_name}"_"${val_chunk} ${params.shapeit} ${params.impute2_reference_dir} ${task.cpus}
 	#	rm *.log *.sample *.haps
 	"""
 }
@@ -535,13 +535,13 @@ process phaseHLA {
         file(sample_tmp) from phased_sample.collect()
         file(correlation_tmp) from phased_correlation.collect()
 	set file(imputed), val(locus) from imp_HLA
-        val(checked_name) from checkedName
 
 	output:
 	file(phase_txt) into phasedHLA
 	file(phase_info)
 
 	script:
+        checked_name=name
 	phase_txt = checked_name +  "." + locus +  ".HLA.phased.txt"
 	phase_info = checked_name + "." + locus + ".HLA.info.txt"
         haps=name + ".haps"
@@ -564,18 +564,18 @@ process phaseHLACombine {
 
 	input:
 	file singles from phasedHLA.collect()
-        val(checked_name) from checkedName
 	set file(bed),file(bim),file(fam) from bimbedfam_phasecombine
  	val(basenameRunname) from basenameRunname
-
+        val(checked_name) from checkedName
 	output:
 	file(phased_result)
 	file(phased_png) into report_phasing
         file(assoc_data_hapl)
         file(assoc_af_hapl)
-
+        file(phased_comb)
 	script:
-	phased_result = checked_name + ".HLA.all.phased.txt"
+        phased_comb = checked_name + ".phased_overview.txt"
+        phased_result = checked_name + ".HLA.all.phased.txt"
         assoc_data_hapl = "imputation_" + checked_name + ".hapl.data"
         assoc_af_hapl = "imputation_" + checked_name + ".hapl.af"
 	phased_png = "phased_" + basenameRunname + ".png"
