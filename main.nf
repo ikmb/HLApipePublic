@@ -33,7 +33,8 @@ General:
 
 --assembly  	Build of your data (default hg19; also supported hg18, data are then lifted)
 --loci      	Loci that should be imputed. Default: As specified in conf/resources.config.
-
+--splitlnnumber Optional split of data for the phasing step. Number of samples in each split.
+ 
 Software/References: 
 --shapeit	Path to the SHAPEIT2 executable.
 --impute2_ref_dir Path to the IMPUTE2 reference.
@@ -104,9 +105,17 @@ if (!params.shapeit || params.shapeit == "/path/to/shapeit2/executable" ) {
 	exit 1, "Must provide a path to the shapeit executable. Edit in netflow.config or supply by using (--shapeit)."
 } 
 
+SHAPEIT=file("${params.shapeit}")
+if (!SHAPEIT.exists() ) {
+        exit 1, "Shapit executable not found at path given by --shapeit. Please check the path."}
+
+
 if (!params.impute2_reference_dir || params.impute2_reference_dir == "/path/to/impute2/reference/files") {
 	exit 1, "Must provide a path to the IMPUTE2 reference. Edit in netflow.config or supply by using (--impute2_reference_dir)."
 } 
+IMPUTEFILE=file("${params.impute2_reference_dir}/1000GP_Phase3_chr6.hap.gz")
+if(!IMPUTEFILE.exists()){
+    exit 1, "Reference file 1000GP_Phase3_chr6.hap.gz not found at PATH declared with --impute2_reference_dir. Please check the path and existence of the file."}
 
 if (!params.valid_assembly.contains(params.assembly) ) {
 		exit 1, "Requested for an unknown assembly (--assembly)"
