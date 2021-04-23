@@ -137,8 +137,8 @@ print(paste("Phasing allele", gen, "..."))
 ###########################################
 # Get Haplotypes and indeces of SNPs
 ###########################################
-out = mclapply(as.list(classifier),function(i){
-  
+out = mclapply(as.list(classifier),function(i){ 
+    
   print(paste("Opening classifier",i))
   # EXTRACT SNP HAPLOTYPES
   snp.haplotypes.model = model[[gen]]$classifiers[[i]]$haplo
@@ -189,8 +189,8 @@ out = mclapply(as.list(classifier),function(i){
   print(out)
   out[is.na(out[,8]),8] = unique(pred$sample.id[!pred$sample.id%in%out[,8]])
   return(out)
-}, mc.cores=8, mc.preschedule = F)
 
+}, mc.cores = detectCores(), mc.preschedule = F)
 
 vote = do.call(rbind, out)
 
