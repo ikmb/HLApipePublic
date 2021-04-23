@@ -8,7 +8,7 @@
 ##############################################
 
 
-library(reshape2)
+#library(reshape2)
 library(parallel)
 library(data.table)
 
@@ -103,7 +103,7 @@ assign = function(phased,haplotypes,  predicted, certainty){
 print(paste("Loading predicted data",pred))
 load(pred)
 pred= pred$value 
-pred.value = melt(pred[,1:3], id="sample.id")
+pred.value = reshape2::melt(pred[,1:3], id="sample.id")
 
 ##########################################
 # Get allele list and name with positions
