@@ -102,7 +102,9 @@ assign = function(phased,haplotypes,  predicted, certainty){
 
 print(paste("Loading predicted data",pred))
 load(pred)
-pred= pred$value 
+pred= pred$value
+pred = pred[pred$sample.id%in%samples$ID_2,]
+print(dim(pred))
 pred.value = reshape2::melt(pred[,1:3], id="sample.id")
 
 ##########################################
