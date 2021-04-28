@@ -126,7 +126,7 @@ print(paste("Loading model",model))
 model=loadObject(model)
 
 #specify subset of classifier
-classifier=sample(1:length(model[[gen]]$classifiers),10, replace=F)
+classifier=sample(1:length(model[[gen]]$classifiers),100, replace=F)
 
 
 # Get alleles and position of SNPs
@@ -207,7 +207,7 @@ final_vote = tapply(paste(vote[,1], vote[,4]), vote$id, function(x){
  if(al[1]==al[2]  | length(grep("/", al[1])) + length(grep("/", al[2]))>0){ #If chromsomes equal not good
    return(c(al[1],al[2],0))
    }else{
-     return(c(al[1],al[2], x[1]/10))}
+     return(c(al[1],al[2], x[1]/100))}
 })
 final_vote = do.call(rbind,final_vote)
 ind = paste(vote$id,vote$X1, vote$X2)%in%paste(rownames(final_vote),final_vote[,1], final_vote[,2])
