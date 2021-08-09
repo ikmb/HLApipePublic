@@ -8,7 +8,7 @@
 ##############################################
 
 
-library(reshape2)
+#library(reshape2)
 library(parallel)
 library(data.table)
 
@@ -102,8 +102,10 @@ assign = function(phased,haplotypes,  predicted, certainty){
 
 print(paste("Loading predicted data",pred))
 load(pred)
-pred= pred$value 
-pred.value = melt(pred[,1:3], id="sample.id")
+pred= pred$value
+pred = pred[pred$sample.id%in%samples$ID_2,]
+print(dim(pred))
+pred.value = reshape2::melt(pred[,1:3], id="sample.id")
 
 ##########################################
 # Get allele list and name with positions
@@ -124,7 +126,7 @@ print(paste("Loading model",model))
 model=loadObject(model)
 
 #specify subset of classifier
-classifier=sample(1:length(model[[gen]]$classifiers),10, replace=F)
+classifier=sample(1:length(model[[gen]]$classifiers),100, replace=F)
 
 
 # Get alleles and position of SNPs
@@ -137,7 +139,7 @@ print(paste("Phasing allele", gen, "..."))
 ###########################################
 # Get Haplotypes and indeces of SNPs
 ###########################################
-for(i in classifier){
+out = mclapply(as.list(classifier),function(i){
   
   print(paste("Opening classifier",i))
   # EXTRACT SNP HAPLOTYPES
@@ -188,11 +190,11 @@ for(i in classifier){
   out[grep("Error",out)]=NA
   print(out)
   out[is.na(out[,8]),8] = unique(pred$sample.id[!pred$sample.id%in%out[,8]])
-  vote = rbind(vote,out)
+  return(out)
+}, mc.cores=8, mc.preschedule = F)
 
-}
 
-
+vote = do.call(rbind, out)
 
 colnames(vote)=c("1","min_1", "shapeit_1", "2", "min_2","shapeit_1", "number.pos","id","classifier")
 vote = data.frame(vote)
@@ -205,7 +207,7 @@ final_vote = tapply(paste(vote[,1], vote[,4]), vote$id, function(x){
  if(al[1]==al[2]  | length(grep("/", al[1])) + length(grep("/", al[2]))>0){ #If chromsomes equal not good
    return(c(al[1],al[2],0))
    }else{
-     return(c(al[1],al[2], x[1]/10))}
+     return(c(al[1],al[2], x[1]/100))}
 })
 final_vote = do.call(rbind,final_vote)
 ind = paste(vote$id,vote$X1, vote$X2)%in%paste(rownames(final_vote),final_vote[,1], final_vote[,2])

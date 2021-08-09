@@ -19,10 +19,15 @@ output_name = args[length(args)]
 ################################
 # Main
 ################################
+
+#sort files by locus
+file_locus = gsub(".*_files[0-9]+.(.*).HLA.phased.txt","\\1",files)
+files = files[order(file_locus)]
+
 output = list()
 for (f in files){
   pred = read.table(f, sep="\t", h=T)
-  locus = gsub(".*_(.*).RData","\\1",f)
+  locus = gsub(".*_(.*).HLA.phased.txt","\\1",f)
   output[[locus]] = pred
 }
 
