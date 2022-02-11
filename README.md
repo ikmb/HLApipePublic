@@ -22,7 +22,6 @@ The result is a .pdf file that informs on the general steps performed in the wor
 - IMPUTE2 reference. [https://mathgen.stats.ox.ac.uk/impute/impute_v2.html#reference]
 - BEAGLE (optional) [https://faculty.washington.edu/browning/beagle/b4_1.html]
 - Beagle map plink.chr6.GRCh37.map [http://bochet.gcc.biostat.washington.edu/beagle/genetic_maps/]
-- FLASHPCA2 [https://github.com/gabraham/flashpca]
 - PLINK 1.9 [https://www.cog-genomics.org/plink/1.9/]
 - R (version 3.5+)
 - R packages: parallel, ggplot2, data.table, reshape, reshape2, HIBAG, SNPRelate, grid, gridExtra, knitR, R.utils
@@ -69,7 +68,6 @@ Usage:  nextflow run HLApipePublic --prefix FILE --reference_name REFERENCE --ru
 
 General:
 
-```--assembly```  	Build of your data (default hg19; also supported hg18, data are then lifted) \
 ```--loci```     	Loci that should be imputed. Default: As specified in conf/resources.config.\
 
 
