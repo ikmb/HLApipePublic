@@ -8,6 +8,7 @@ This pipeline offers a workflow for HLA imputation and phasing for small dataset
 - alignment of a study to the imputation reference
 - HLA imputation
 - calculation of marginal probabilitites per allele of imputation results
+- calculation of alleles that have similar haplotypes
 - SNP phasing of SNPs in the HLA region (chr6:25-34Mb)
 - HLA phasing of HLA alleles.
 
