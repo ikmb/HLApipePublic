@@ -31,7 +31,6 @@ Usage:  nextflow run HLApipePublic --prefix FILE --reference_name REFERENCE --ru
 Optional parameters:
 General: 
 
---assembly  	Build of your data (default hg19; also supported hg18, data are then lifted)
 --loci      	Loci that should be imputed. Default: As specified in conf/resources.config.
 
 Software/References: 
@@ -47,7 +46,6 @@ Others:
 
 --email         Email address to send reports to (enclosed in '')
 --outdir        Path to output directory. Default: results.
-
 
 """
 
@@ -75,23 +73,18 @@ params.impute2_reference_dir = "/path/to/impute2/reference/files"
 params.shapeit = "/path/to/shapeit2/executable"
 params.beagle = "/path/to/beagle/jar"
 
-
 // *****************************
 // Location of preloaded files
 // *****************************
 params.supplementary_dir = baseDir + "/assets/supplementary"
-params.liftover_file = baseDir + "/assets/liftover/hg18ToHg19.over.chain.gz"
 params.tex_dir = baseDir + "/assets/tex"
-
 params.sample = baseDir + "/assets/samples/1000GP_Phase3_global.cluster"
-params.ref_1000G = baseDir + "/assets/variants/chr1_22_0.05"
 params.do_beagle = false
-
+params.bin_dir= baseDir + "/bin"
 
 // *****************************
 // Initialize other parameters
 // *****************************
-params.assembly = "hg19"
 params.loci = false
 params.dict = false
 params.splitlnumber=100
@@ -107,11 +100,6 @@ if (!params.shapeit || params.shapeit == "/path/to/shapeit2/executable" ) {
 if (!params.impute2_reference_dir || params.impute2_reference_dir == "/path/to/impute2/reference/files") {
 	exit 1, "Must provide a path to the IMPUTE2 reference. Edit in netflow.config or supply by using (--impute2_reference_dir)."
 } 
-
-if (!params.valid_assembly.contains(params.assembly) ) {
-		exit 1, "Requested for an unknown assembly (--assembly)"
-	}
-
 
 if (!params.references) {
 	exit 1, "No hashmap for references defined for this execution profile, please see documentation for how to create such information."
@@ -131,15 +119,10 @@ if (!DICTIONARY) {
 	exit 1, "Must provide dictionary for AA and SNP translation. Edit in conf/resources.config."
 }
 
-if (!params.ref_1000G){
-	exit 1, "Must provide a path to the 1000G .bim/.bed/.fam. Edit in netflow.config or supply by using (--ref_1000G)."
-}
 
 if (!params.sample){
 	exit 1, "Must provide a path to the 1000G .sample file. Edit in netflow.config or supply by using (--sample)."
 }
-
-
 
 
 if (!params.valid_pops.contains(params.subpop) && params.subpop!=""  && (params.reference_name == "IKMB" || params.reference_name == "IKMB_g" || params.reference_name == "IKMB_1KG") ) {
@@ -149,17 +132,11 @@ if (params.subpop &&  !(params.reference_name== "IKMB" || params.reference_name 
 		exit 1, "This reference does not support subpopulations (do not put --subpop)."
 }
  
-
-
-
-
-
 if (params.do_beagle) {
 BEAGLE_MAP = file("${baseDir}/assets/beagle_map/plink.chr6.GRCh37.map")
 if (!BEAGLE_MAP.exists() ){
 	exit 1, "Could not find the beagle map that is supposed to be included with this code base."
 }
-
 }
 
 if (params.do_beagle && params.beagle == "/path/to/beagle/jar") {
@@ -171,13 +148,11 @@ if (params.do_beagle && params.beagle == "/path/to/beagle/jar") {
 // *****************************
 
 
-
-LOCI = params.loci ?:  params.references[params.reference_name].loci
+LOCI = params.loci.tokenize(',') ?:  params.references[params.reference_name].loci
 
 if (!LOCI) {
 	exit 1, "Must provide loci to be analysed. Default should be in the conf/rescources.config or specified using (--loci)"
 }
-
 
 
 // *******************************
@@ -195,7 +170,6 @@ summary['runName'] = run_name
 summary['Current home'] = "$HOME"
 summary['Current user'] = "$USER"
 summary['Current path'] = "$PWD"
-summary['Assembly'] = params.assembly
 summary['Reference'] = params.reference_name
 summary['Model'] = MODEL_NAME
 summary['Beagle'] =  params.do_beagle
@@ -215,73 +189,10 @@ Channel.fromPath("${params.prefix}.{bed,bim,fam}")
 	.toSortedList()
 	.set { inputFiles }
 
-// **********
-// This process performs a liftover or prepares input data.
-// **********
-if (params.assembly != "hg19") {
-
-	process liftover {
-		publishDir "${params.outdir}/liftover", mode: 'copy'
-
-		input:
-		set file(bed),file(bim),file(fam) from inputFiles
-
-		output:
-		set file(bed_lifted),file(bim_lifted),file(fam_lifted) into (inputPrep)
-		file(unmSNPs)
-		file(unmCHR) into report_liftover
-	 
-		script:
-
-		prefix = bed.getBaseName()
-		base_name = prefix + "_" + run_name + "_hg19"
-		bed_lifted = base_name + ".bed"
-		bim_lifted = base_name + ".bim"
-		fam_lifted = base_name + ".fam"
-		
-		unmSNPs = "unmappedSNPs_" + base_name + ".txt"
-		unmCHR = "unmappedCHR_" + base_name + ".txt"
-
-		"""
-		liftover_pos.sh $bim 
-		liftOver prelift.pos ${params.liftover_file} postlift.pos unMapped.txt -positions
-		liftover.R postlift.pos unMapped.txt $prefix $base_name
-		"""
-
-	}
-}  else {
-
-
-	process noliftover {
-
-		input:
-		set file(bed),file(bim),file(fam) from inputFiles
-        
-		output:
-		file("noliftover.txt") into report_liftover
-	        set file(bed_out), file(bim_out), file(fam_out) into inputPrep
-		script:
-
-		prefix = bed.getBaseName()
-                base_name = prefix + "_" + run_name 
-                bed_out = base_name + ".bed"
-                bim_out = base_name + ".bim"
-                fam_out = base_name + ".fam"
-
-	       	"""
-		plink --bfile $prefix --make-bed --out $base_name
-		echo "" > noliftover.txt
-		
-		"""
-	}	        
-}
-
 
 // **********
-// This process reads data from liftover, excludes duplicated sites (the duplicate site with less data present)
-// and extracts chromosome 6.
-//
-// **********
+// This process reads data & excludes duplicated sites
+// ***********
 
 
 process readData {
@@ -289,7 +200,7 @@ process readData {
 //	publishDir "${params.outdir}/preprocess", mode: 'copy'
 
 	input:
-	set file(bed),file(bim),file(fam) from inputPrep
+	set file(bed),file(bim),file(fam) from inputFiles
 
 	output:
 	set file(bed_mod),file(bim_mod),file(fam_mod) into (bimbedfam_in, bimbedfam_report)
@@ -298,8 +209,8 @@ process readData {
     	val(base_name) into baseNameTMP
 	val(prefix) into basenameRunname
         file("split_files*") into chunks
-	script:
 
+	script:
 	prefix = bed.getBaseName()
 	base_name= prefix +  "_6_29_34"
 	bed_mod = base_name + ".bed"
@@ -315,24 +226,15 @@ process readData {
         fam_phase = base_name_phase + ".fam"
 
 	"""
-#		check_build.R ${params.ref_1000G} $prefix
-		duplicates.R $prefix
-		plink --bfile $prefix --exclude exclude_duplicates.txt --make-bed --out $base_name_qc
-         
-
-                
+		readDataDUPLICATES.R $prefix
+		plink --bfile $prefix --exclude exclude_duplicates.txt --make-bed --out $base_name_qc                        
 		plink --allow-no-sex --bfile $base_name_qc  --chr 6 --from-mb 25 --to-mb 35 --make-bed --out $base_name_phase
-              
-
                 split -l ${params.splitlnumber}  -d $fam_phase "split_files"
                 
-
-
    
            	plink --allow-no-sex --bfile $base_name_qc --make-bed --out $base_name_qc
 		plink --allow-no-sex --bfile $prefix  --chr 6 --from-mb 29 --to-mb 34 --make-bed --out $base_name
 
-               
 	"""
 
 }
@@ -401,13 +303,13 @@ process alignToReference {
 	ref = "report_refchecked_" + basenameRunname + ".txt"
 
 
-         def options = ""
+        def options = ""
         if (params.subpop && (params.references == "IKMB" || params.references == "IKMB_g" || params.references == "IKMB_1KG")) {
                 options = params.frqs
 
         }
         """
-                match_study_to_reference.R $MODEL_NAME $base_name ${options}
+                alignToReference.R $MODEL_NAME $base_name ${options}
 		mv "refchecked_A.png" $refA
 		mv "refchecked_B.png" $refB
 		mv "report.refchecked.txt" $ref
@@ -433,7 +335,8 @@ process imputeHLA {
 	impute_result = "imputation_" + checked_name + "_" + locus + ".RData"
 
 	"""
-		impute.R $checked_name ${params.assembly} $MODEL_NAME $locus
+		imputeHLA.R $checked_name $MODEL_NAME $locus 
+                imputeHLA.same_haplo.R $locus $MODEL_NAME $checked_name $checked_name
 	"""
 }
 
@@ -454,14 +357,15 @@ process imputeHLACombine {
 	output:
 	file(result) into imputation_all
         set file(postprob_png), file(unsure_png), file(unsure) into report_postprob
-	set file(csv_out), file(assoc_data), file(assoc_af), file(map), file(ped), file(bim), file(bed), file(fam)
+	set file(csv_out), file(data), file(info), file(map), file(ped), file(bim), file(bed), file(fam)
 
 	script:	
 	result = "imputation_" + checked_name + ".RData"
 	unsure = "marginal_prob_" +  checked_name +  ".txt"
-	csv_out = "imputation_" + checked_name +  ".csv" 
-        assoc_data = "imputation_" + checked_name + ".data"
-        assoc_af = "imputation_" + checked_name + ".af"
+	csv_out = "imputation_" + checked_name +  ".csv"
+        data = "imputation_" + checked_name + ".data" 
+        data = "imputation_" + checked_name + ".HLA.data"
+        info = "imputation_" + checked_name + ".info"
         nuc_data = "imputation_" + checked_name + ".nuc.data"
         prot_data =  "imputation_" + checked_name + ".prot.data"
 	map =  "imputation_" + checked_name + ".map"
@@ -472,12 +376,11 @@ process imputeHLACombine {
 	postprob_png = "postprob_" + basenameRunname +".png"
 	unsure_png = "unsure_" + basenameRunname + ".png"
 	"""
-		combine_loci_imputation.R $singles $result
-		get_marginal_prob.R $result $checked_name
-		postprob.R $result
-		make_output.R $result $checked_name
-		prepare_single.R $result $checked_name $params.supplementary_dir/location_HLA_genes_hg19.txt $DICTIONARY
-		util.R $checked_name
+		imputeHLACombineRData.R $singles $result
+                imputeHLACombineCSV.R $result $checked_name
+		imputeHLACombinePLOT.R $result
+		imputeHLACombinePLINK.R $result $checked_name $params.supplementary_dir/location_HLA_genes_hg19.txt $DICTIONARY
+                imputeHLACombineINFO.R $result $checked_name $params.bin_dir/utilityFUNCTIONS.R
 		mv "postprob.png" $postprob_png
 		mv "unsure.png" $unsure_png
 	"""	
@@ -515,7 +418,7 @@ process phaseSNPs {
 	phased_name_val = checked_name + "_" + val_chunk
         """                  
 		plink --bfile ${prefix} --keep ${fam_chunk} --geno 0.05 --make-bed --out ${checked_name}"_"${val_chunk}
-		phase_global_SNPs_parallel.sh ${checked_name}"_"${val_chunk} ${params.shapeit} ${params.impute2_reference_dir} ${task.cpus}
+		phaseSNPs.sh ${checked_name}"_"${val_chunk} ${params.shapeit} ${params.impute2_reference_dir} ${task.cpus}
 	#	rm *.log *.sample *.haps
 	"""
 }
@@ -549,7 +452,7 @@ process phaseHLA {
         certainty = name + ".certainty.all"
 	"""
                   
-		phase.R $checked_name $imputed $haps $sample $certainty $MODEL_NAME $locus
+		phaseHLA.R $checked_name $imputed $haps $sample $certainty $MODEL_NAME $locus
 	"""
 }
 
@@ -567,25 +470,33 @@ process phaseHLACombine {
 	set file(bed),file(bim),file(fam) from bimbedfam_phasecombine
  	val(basenameRunname) from basenameRunname
         val(checked_name) from checkedName
+
 	output:
 	file(phased_result)
 	file(phased_png) into report_phasing
-        file(assoc_data_hapl)
-        file(assoc_af_hapl)
+        set file(data), file(info), file(map), file(ped), file(bim), file(bed), file(fam)
         file(phased_comb)
+
 	script:
-        phased_comb = checked_name + ".phased_overview.txt"
+        phased_comb = checked_name + ".phased.csv"
         phased_result = checked_name + ".HLA.all.phased.txt"
-        assoc_data_hapl = "imputation_" + checked_name + ".hapl.data"
-        assoc_af_hapl = "imputation_" + checked_name + ".hapl.af"
+        data = "imputation_" + checked_name + ".haplotypes.data"
+        info = "imputation_" + checked_name + ".haplotypes.info"
 	phased_png = "phased_" + basenameRunname + ".png"
+        map =  "imputation_" + checked_name + ".haplotypes.map"
+        ped =  "imputation_" + checked_name + ".haplotypes.ped"
+        bim =  "imputation_" + checked_name + ".haplotypes.bim"
+        bed =  "imputation_" + checked_name + ".haplotypes.bed"
+        fam =  "imputation_" + checked_name + ".haplotypes.fam"
 	"""
-		combine_loci_phasing.R ${singles} $phased_result
-		prepare_haplo.R $checked_name
-                util.R $checked_name
+		phaseHLACombine.R ${singles} $phased_result
+		phaseHLACombinePLINK.R $checked_name $params.bin_dir/utilityFUNCTIONS.R
+                phaseHLACombineCSV.R $data $phased_comb
+                phaseHLACombineINFO.R $checked_name $data $params.bin_dir/utilityFUNCTIONS.R
 		mv "phased.png" $phased_png
 	"""
 }
+
 
 
 // **********
@@ -596,11 +507,10 @@ process report {
     publishDir "${params.outdir}", mode: 'copy'
     
     input:
-    file liftover from report_liftover
     set file(figrefcheckA),file(figrefcheckAB), file(tabrefcheck) from report_datacheck
     set file(postprob), file(unsurepng), file(unsuretxt) from report_postprob
     file(phased) from report_phasing
-    set file(bim), file(bed), file(fam) from inputPrep
+    set file(bim), file(bed), file(fam) from inputFiles
     val(checked_name) from checkedName
     val(base_name) from baseName
     val(basenameRunname) from basenameRunname
@@ -614,6 +524,6 @@ process report {
     """
 	plink --bfile $rootname --missing --out $rootname
         cp -r ${params.tex_dir}/* .
-        R -e 'rmarkdown::render("report.Rmd", output_file="${output}", params = list(rootname="${rootname}", checked_name="${checked_name}",  pop="${params.subpop}", model="${MODEL_NAME}", shapeit="${params.shapeit}", modules="${LOADEDMODULES}", liftover="${liftover}", assembly="${params.assembly}", basenamerunname="${basenameRunname}"))'
+        R -e 'rmarkdown::render("report.Rmd", output_file="${output}", params = list(rootname="${rootname}", checked_name="${checked_name}",  pop="${params.subpop}", model="${MODEL_NAME}", shapeit="${params.shapeit}", modules="${LOADEDMODULES}", basenamerunname="${basenameRunname}"))'
     """
 }
