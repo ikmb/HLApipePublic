@@ -283,18 +283,19 @@ To add a reference, make an entry into conf/resources.config.
 
 ## Amino acid and SNP Dictionary
 
-The current dictionaries include impute_SNPs_AA_full.RData and impute_SNPs_AA_full.RData. The former is a lookup for for-digit full context HLA alleles, the latter is based on G-groups (http://hla.alleles.org).
+The current dictionaries include impute_SNPs_AA_full.RData and impute_SNPs_AA_G.RData. The former is a lookup for for-digit full context HLA alleles, the latter is based on G-groups (http://hla.alleles.org).
 
-Scripts to create a new dictionary are contained in the utilityHLAPipePublic folder. 
+Scripts to create a new dictionary are contained in the util folder. 
 
-- Download the alignment folder from the IMGT-HLA github (https://github.com/ANHIG/IMGTHLA.git).
-- Download hla_nom_g.txt from http://hla.alleles.org
-- Download Allele_status.txt from the IMGT-HLA github (https://github.com/ANHIG/IMGTHLA.git)
+- Download the alignments folder from the IMGT-HLA github (https://github.com/ANHIG/IMGTHLA.git) and place folder into util/alignments.
+- Download hla_nom_g.txt from http://hla.alleles.org and place into util.
+- Download Allele_status.txt from the IMGT-HLA github (https://github.com/ANHIG/IMGTHLA.git) and place into util.
 
 ```
-Rscript utlityHLAPipePublic/scripts/prepare_alignment.R "path/to/alignment directory" utilityHLAPipePublic/util utlityHLAPipePublic/scripts 
+cd util
+Rscript scripts/prepare_alignment.R alignments reference scripts 
 ```
-
+Place the newly created impute_SNPs_AA_full.RData and impute_SNPs_AA_G.RData into assets/supplementary
 
 ## REFERENCES
 - Degenhardt F, Wendorff M, et al. Construction and benchmarking of a multi-ethnic reference panel for the imputation of HLA class I and II alleles. Hum Mol Genet. 2019 Jun 15;28(12):2078-2092. doi: 10.1093/hmg/ddy443. PMID: 30590525; PMCID: PMC6548229.
