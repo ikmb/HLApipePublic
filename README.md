@@ -152,6 +152,11 @@ nextflow run HLApipePublic --prefix example/trio_CEU --reference_name GSA_Broad 
 ## Output formats
 NOTE: For joint analysis with original PLINK input, output files form this pipeline have to be merged with the data from the PLINK input. 
 
+
+<details> <summary>.*html </summary>
+Detailed and graphical output of the pipeline, showing the alignment of your input data to the reference model based on allele frequencies, different measures for imputation and phasing accuracy.
+</details>
+	
 <details> <summary>
 alignToReference: .*.summary.refchecked.txt</summary>
 
