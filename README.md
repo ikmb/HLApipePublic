@@ -9,7 +9,7 @@ Preprocessing:
 - Alignment of a study to the imputation reference
 
 Main:
-- HLA, Amino acid & SNP imputation
+- HLA, Amino acid (AA) & SNP imputation
 - Phasing of HLA alleles
 
 Utility: 
@@ -155,7 +155,7 @@ imputeHLA/phaseHLA: .*info</summary>
 | P_HWE_CONTROL | P-value of conformity with Hardy-Weinberg Equilibrium in controls 
 </details>
 
-details> <summary>
+<details> <summary>
 imputeHLA/phaseHLA: .*RData</summary>
 	
 | Name  | Description |
@@ -191,6 +191,19 @@ For each sample the dose 0,1,2 of presence (P) of the allele is given.
 imputeHLA/phaseHLA: .*ped/.map/.bed/.bim/.fam </summary>
 PLINK file format [https://www.cog-genomics.org/plink/1.9/].
 </details>
+
+<details> <summary>
+phaseHLA: .*META.PHASING.txt</summary>
+| Name  | Description |
+| ------------- | ------------- |
+| chr | chromosome in input file|
+| id | of HLA allele or HLA haplotype  |
+| pos | position (bp)  |
+| REF| reference allele (A = Absent)  |
+| ALT | alternative allele (P = Present)  |
+| COLUMNS AFTER | sample ids|
+</details>
+
 
 
 
