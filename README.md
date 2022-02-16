@@ -135,8 +135,8 @@ imputeHLA: .*overlap_alleles.*.txt</summary>
 | gene| HLA locus|
 | alleles | HLA allele code; compared allele combination |
 | 0%-100%| min, max and quartiles of the % position overlap for N classifiers|
-| NClassifiers | Number of classifiers
-
+| NClassifiers | Number of classifiers |
+</details>
 ## HLA reference panels
 
 ###  Add a reference
