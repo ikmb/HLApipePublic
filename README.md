@@ -3,7 +3,7 @@
 # HLApipePublic
 
 
-This pipeline offers a workflow for HLA imputation using HIBAG (Zheng et al., 2014) and phasing for small datasets (Degenhardt et al., 2020) including utility scripts to evaluate the accuracy of the imputation. It is designed to work within a computing cluster. For specific requirements see the .config files below.
+This pipeline offers a workflow for HLA imputation using HIBAG (Zheng et al., 2014) and phasing for small datasets (Degenhardt et al., 2021) including utility scripts to evaluate the accuracy of the imputation. It is designed to work within a computing cluster. For specific requirements see the .config files below.
 
 Preprocessing:
 - Alignment of a study to the imputation reference
