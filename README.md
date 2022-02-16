@@ -263,9 +263,6 @@ To add a reference, make an entry into conf/resources.config.
 | model | path to the HIBAG RData object|
 | loci | loci for which the HIBAG model was trained  |
 | dict| path to the dictionary RData object for imputation of amino acids and SNP from HLA allele information (see below) |
-| REF| reference allele (A = Absent)  |
-| ALT | alternative allele (P = Present)  |
-| COLUMNS AFTER | sample ids|
 
 ```
 	'IKMB' {
