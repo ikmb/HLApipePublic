@@ -103,19 +103,19 @@ conda activate hla-pipe-1.0
 - Download the plink.chr6.GRCh37.map and place it into assets/beagle_map/
 
 
-# Usage
+## Usage
 
-## Basic execution
+### Basic execution
 ```
 Usage:  nextflow run HLApipePublic --prefix FILE --reference_name REFERENCE --run_name NAME --shapeit SHAPEIT --impute2_reference_dir IMPUTE2_REF_DIR 
 ```
-## Parameters
+### Parameters
 
 ```--prefix```		An input prefix referencing a set of PLINK files \
 
 ```--reference_name``` 	Name of the reference imputation panel (see below for details) 
 
-## Optional parameters:
+### Optional parameters:
 
 General:
 
@@ -137,10 +137,10 @@ Others:
 ```--email```         Email address to send reports to (enclosed in '') \
 ```--outdir```        Path to output directory. Default: results.
 
-## Input
+## Input formats
  - PLINK file in .bed/.bim/.fam format. Assembly must be the same as the assembly of the reference. Default here hg19.
 
-## Example file
+## Example 
 
 Example data are stored in the directory "example" that can be downloaded with this repository. These example data
 are trio-individuals [Utah Residents (CEPH) with Northern and Western European Ancestry (CEU)] extracted from the Hapmap Phase 3 project and HLA allele information published for these individuals in the 1000 Genomes HLA diversity panel (Gourrard et al., 2014) (extracted from ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20140725_hla_genotypes/20140702_hla_diversity.txt). See Degenhardt et al., 2021 for details. 
@@ -149,7 +149,7 @@ are trio-individuals [Utah Residents (CEPH) with Northern and Western European A
 nextflow run HLApipePublic --prefix example/trio_CEU --reference_name GSA_Broad --run_name gsa_broad --loci DPB1,DQA1,DQB1 --shapeit SHAPEIT --impute2_reference_dir IMPUTE2_REF_DIR --do_beagle false -resume
 ```
 
-## Outputs
+## Output formats
 NOTE: For joint analysis with original PLINK input, output files form this pipeline have to be merged with the data from the PLINK input. 
 
 <details> <summary>
