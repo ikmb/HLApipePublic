@@ -3,7 +3,7 @@
 # HLApipePublic
 
 
-This pipeline offers a workflow for HLA imputation using HIBAG (Zheng et al., 2014) and phasing for small datasets (Degenhardt et al., 2020) including utility scripts to evaluate the accuracy of the imputation.
+This pipeline offers a workflow for HLA imputation using HIBAG (Zheng et al., 2014) and phasing for small datasets (Degenhardt et al., 2020) including utility scripts to evaluate the accuracy of the imputation. It is designed to work within a computing cluster. For specific requirements see the .config files below.
 
 Preprocessing:
 - Alignment of a study to the imputation reference
@@ -54,7 +54,52 @@ params {
 }
 ```
 
-- R packages can be installed using anaconda and `conda env create -f environment.yml`
+base.config
+```
+ // Global cluster parameters
+  cpus = { check_max( 1 * task.attempt, 'cpus' ) }
+  memory = { check_max( 8.GB * task.attempt, 'memory' ) }
+  time = { check_max( 2.h * task.attempt, 'time' ) }
+
+  errorStrategy = { task.exitStatus in [143,137,140,7] ? 'retry' : 'finish' }
+  maxRetries = 3
+  maxErrors = '-1'
+
+  // Specific cluster parameters for each process
+
+  // software dependencies moved to conda.config
+
+  withName:imputeHLA {
+        memory = { check_max( 120.GB * task.attempt, 'memory' ) }
+        time = { check_max( 120.h * task.attempt, 'time' ) }
+        cpus = { check_max( 16 , 'cpus' ) }
+  }
+  withName:phaseSNPs {
+        memory = { check_max( 10.GB * task.attempt, 'memory' ) }
+        time = { check_max( 120.h * task.attempt, 'time' ) }
+        cpus = { check_max( 8 , 'cpus' ) }
+  }
+  withName:phaseHLA {
+	memory = { check_max( 50.GB * task.attempt, 'memory' ) }
+        time = { check_max( 48.h * task.attempt, 'time' ) }
+        cpus = { check_max( 8 , 'cpus' ) }
+  }
+  withName:imputeHLACombine {
+        memory = { check_max( 50.GB * task.attempt, 'memory' ) }
+        time = { check_max( 48.h * task.attempt, 'time' ) }
+  }
+  withName:phaseHLACombine {
+        memory = { check_max( 20.GB * task.attempt, 'memory' ) }
+        time = { check_max( 48.h * task.attempt, 'time' ) }
+  }
+
+```
+
+- R packages and PLINK can be installed using anaconda and ``
+```
+conda env create -f environment.yml
+conda activate hla-pipe-1.0
+```
 - Download the plink.chr6.GRCh37.map and place it into assets/beagle_map/
 
 
