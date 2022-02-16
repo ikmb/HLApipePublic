@@ -138,11 +138,11 @@ Others:
 ```--outdir```        Path to output directory. Default: results.
 
 ## Input formats
- - PLINK file in .bed/.bim/.fam format. Assembly must be the same as the assembly of the reference. Default here hg19.
+- PLINK file in .bed/.bim/.fam format. Assembly must be the same as the assembly of the reference. Default here hg19.
 
 ## Example 
 
-Example data are stored in the directory "example" that can be downloaded with this repository. These example data
+- Example data are stored in the directory "example" that can be downloaded with this repository. These example data
 are trio-individuals [Utah Residents (CEPH) with Northern and Western European Ancestry (CEU)] extracted from the Hapmap Phase 3 project and HLA allele information published for these individuals in the 1000 Genomes HLA diversity panel (Gourrard et al., 2014) (extracted from ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20140725_hla_genotypes/20140702_hla_diversity.txt). See Degenhardt et al., 2021 for details. 
 
 ```
