@@ -135,10 +135,65 @@ imputeHLA: .*overlap_alleles.*.txt</summary>
 | ------------- | ------------- |
 | gene| HLA locus|
 | alleles | HLA allele code; compared allele combination |
-| 0%-100%| min, max and quartiles of the % position overlap for N classifiers|
+| 0%-100%| min (0%), max (100%) and quartiles (25%, 50%, 75%) of the % position overlap for N classifiers|
 | NClassifiers | Number of classifiers |
 
 </details>
+
+details> <summary>
+imputeHLA/phaseHLA: .*info</summary>
+	
+| Name  | Description |
+| ------------- | ------------- |
+| chr | chromosome in input file|
+| id | of HLA allele or HLA haplotype  |
+| pos | position (bp)  |
+| REF| reference allele (A = Absent)  |
+| ALT | alternative allele (P = Present)  |
+| AF_ALL,\_CASE,\_CONTROL,\_UKN | allele frequency: all, cases only, controls only or individuals with unknown status |
+| SAMPLES_ALL,\_CASE,\_CONTROL,\_UKN  | Number of individuals: all, all, cases only, controls only or individuals with unknown status |
+| P_HWE_CONTROL | P-value of conformity with Hardy-Weinberg Equilibrium in controls 
+</details>
+
+details> <summary>
+imputeHLA/phaseHLA: .*RData</summary>
+	
+| Name  | Description |
+| ------------- | ------------- |
+| chr | chromosome in input file|
+| id | of HLA allele or HLA haplotype  |
+| pos | position (bp)  |
+| REF| reference allele (A = Absent)  |
+| ALT | alternative allele (P = Present)  |
+| COLUMNS AFTER | sample ids|
+
+For each sample the dose 0,1,2 of presence (P) of the allele is given.
+</details>
+
+
+<details> <summary>
+imputeHLA/phaseHLA: .*csv</summary>
+	
+| Name  | Description |
+| ------------- | ------------- |
+| chr | chromosome in input file|
+| id | of HLA allele or HLA haplotype  |
+| pos | position (bp)  |
+| REF| reference allele (A = Absent)  |
+| ALT | alternative allele (P = Present)  |
+| COLUMNS AFTER | sample ids|
+
+For each sample the dose 0,1,2 of presence (P) of the allele is given.
+</details>
+
+
+<details> <summary>
+imputeHLA/phaseHLA: .*ped/.map/.bed/.bim/.fam </summary>
+PLINK file format [https://www.cog-genomics.org/plink/1.9/].
+</details>
+
+
+
 
 ## HLA reference panels
 
