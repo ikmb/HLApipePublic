@@ -100,7 +100,6 @@ Others:
 <details> <summary>
 alignToReference: .*.summary.refchecked.txt</summary>
 
-
 | Name  | Description |
 | ------------- | ------------- |
 | chr | chromosome in input file|
@@ -115,11 +114,19 @@ alignToReference: .*.summary.refchecked.txt</summary>
 | ref.MAF | minor allele frequency in reference model  |
 | action | action taken |
 | type | type of genotype AT/CG or not |
-	
-	
-	
 </details>
+<details> <summary>
+imputeHLA: .*marginal_prob.*.txt</summary>
 
+| Name  | Description |
+| ------------- | ------------- |
+| locus| HLA locus|
+| id | HLA allele code |
+| prob | marginal posterior probability cauclated from the HIBAG model |
+| freq | frequency of the HLA allele  |
+| digits | calculated for X digits  |
+
+</details>	
 
 ## HLA reference panels
 
