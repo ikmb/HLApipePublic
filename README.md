@@ -119,7 +119,7 @@ Usage:  nextflow run HLApipePublic --prefix FILE --reference_name REFERENCE --ru
 
 General:
 
-```--loci```     	Loci that should be imputed. Default: As specified in conf/resources.config.\
+```--loci```     	Loci that should be imputed. Comma-sparated. e.g. DPA1,DPB1,DQA1 Default: As specified in conf/resources.config.\
 
 
 Software/References: 
