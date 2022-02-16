@@ -292,7 +292,7 @@ Scripts to create a new dictionary are contained in the utilityHLAPipePublic fol
 - Download Allele_status.txt from the IMGT-HLA github (https://github.com/ANHIG/IMGTHLA.git)
 
 ```
-Rscript path/to/utlityHLAPipePublic/scripts/prepare_alignment.R "path/to/alignment directory" "path/to/utilityHLAPipePublic/util" "path/to/utlityHLAPipePublic/scripts" 
+Rscript utlityHLAPipePublic/scripts/prepare_alignment.R "path/to/alignment directory" utilityHLAPipePublic/util utlityHLAPipePublic/scripts 
 ```
 
 
