@@ -20,12 +20,6 @@ Utility:
 Additional code includes: 
 - Preparation of SNP/AA database from IMGT
 
-## Outputs
-
-Folders: 
-alignToReference: SNPs that 
-
-
 
 ## Dependencies 
 
@@ -97,6 +91,21 @@ Others:
 
 ```--email```         Email address to send reports to (enclosed in '') \
 ```--outdir```        Path to output directory. Default: results.
+
+
+## Input
+ - PLINK file in .bed/.bim/.fam format. Assembly must be the same as the assembly of the reference. Default here hg19.
+
+## Outputs
+
+alignToReference: .*.summary.refchecked.txt
+
+| Name  | Description |
+| ------------- | ------------- |
+| chr | chromosome in input file|
+| id | SNP id in input file  |
+
+
 
 ## HLA reference panels
 
