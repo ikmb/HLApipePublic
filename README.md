@@ -34,7 +34,7 @@ Additional code includes:
 
 ## Installation
 
-Change the following lines in the nextflow.config files (https://www.nextflow.io/docs/latest/config.html) files to fit your requirements: 
+Change the following lines in the nextflow.config files (https://www.nextflow.io/docs/latest/config.html) files to fit your requirements. Especially make sure that the time limit of your computing cluster allows the max_time runtime.
 
 nextflow.config:
 
@@ -295,7 +295,7 @@ Scripts to create a new dictionary are contained in the util folder.
 cd util
 Rscript scripts/prepare_alignment.R alignments reference scripts 
 ```
-Place the newly created impute_SNPs_AA_full.RData and impute_SNPs_AA_G.RData into assets/supplementary
+Place the newly created impute_SNPs_AA_full.RData and impute_SNPs_AA_G.RData into assets/supplementary.
 
 ## REFERENCES
 - Degenhardt F, Wendorff M, et al. Construction and benchmarking of a multi-ethnic reference panel for the imputation of HLA class I and II alleles. Hum Mol Genet. 2019 Jun 15;28(12):2078-2092. doi: 10.1093/hmg/ddy443. PMID: 30590525; PMCID: PMC6548229.
