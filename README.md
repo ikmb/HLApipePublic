@@ -105,6 +105,19 @@ alignToReference: .*.summary.refchecked.txt</summary>
 | ------------- | ------------- |
 | chr | chromosome in input file|
 | id | SNP id in input file  |
+| pos | position (bp) in input file  |
+| A1| minor allele in input file  |
+| A2 | major allele in input file  |
+| MAF | minor allele frequency in input file |
+| ref.pos | position (bp) in reference model  |
+| ref.A1 |  minor allele in reference model|
+| ref.A2 | major allele in reference model  |
+| ref.MAF | minor allele frequency in reference model  |
+| action | action taken |
+| type | type of genotype AT/CG or not |
+	
+	
+	
 </details>
 
 
