@@ -283,7 +283,17 @@ To add a reference, make an entry into conf/resources.config.
 
 ## Amino acid and SNP Dictionary
 
+The current dictionaries include impute_SNPs_AA_full.RData and impute_SNPs_AA_full.RData. The former is a lookup for for-digit full context HLA alleles, the latter is based on G-groups (http://hla.alleles.org).
 
+Scripts to create a new dictionary are contained in the utilityHLAPipePublic folder. 
+
+- Download the alignment folder from the IMGT-HLA github (https://github.com/ANHIG/IMGTHLA.git).
+- Download hla_nom_g.txt from http://hla.alleles.org
+- Download Allele_status.txt from the IMGT-HLA github (https://github.com/ANHIG/IMGTHLA.git)
+
+```
+Rscript path/to/utlityHLAPipePublic/scripts/prepare_alignment.R "path/to/alignment directory" "path/to/utilityHLAPipePublic/util" "path/to/utlityHLAPipePublic/scripts" 
+```
 
 
 ## REFERENCES
