@@ -99,12 +99,13 @@ Others:
 ## Outputs
 
 alignToReference: .*.summary.refchecked.txt
+<details> <summary>
 
 | Name  | Description |
 | ------------- | ------------- |
 | chr | chromosome in input file|
 | id | SNP id in input file  |
-
+</summary></details>
 
 
 ## HLA reference panels
