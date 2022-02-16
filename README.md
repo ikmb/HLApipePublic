@@ -142,6 +142,8 @@ Others:
  - PLINK file in .bed/.bim/.fam format. Assembly must be the same as the assembly of the reference. Default here hg19.
 
 ## Outputs
+NOTE: For joint analysis with original PLINK input, output files form this pipeline have to be merged with the data from the PLINK input. 
+
 <details> <summary>
 alignToReference: .*.summary.refchecked.txt</summary>
 
@@ -250,25 +252,25 @@ phaseHLA: .*META.PHASING.txt</summary>
 </details>
 
 
-
-
-
 ## HLA reference panels
 
 ###  Add a reference
 
-To add a reference make an entry into the conf/resources.config
+To add a reference make an entry into the conf/resources.config. Model must be HIBAG model. Loci speficies the genes that are present in the HIBAG model, dict refers to the dictionary used to impute amino acid and SNP information from HLA alleles. 
 
 
 ```
 	'IKMB' {
 		model = "${baseDir}/assets/models/multiethnic_IKMB/model_multiethnic.RData"
 		loci = ["A","B","C","DRB1","DQA1","DQB1","DPA1","DPB1","DRB3","DRB4","DRB5"]
+		dict =${baseDir}/assets/supplementary/impute_SNPs_AA_full.RData"
 	}
   
 ```
 
-## 
+## Amino acid and SNP Dictionary
+
+
 ## REFERENCES
 - Degenhardt F, Wendorff M, et al. Construction and benchmarking of a multi-ethnic reference panel for the imputation of HLA class I and II alleles. Hum Mol Genet. 2019 Jun 15;28(12):2078-2092. doi: 10.1093/hmg/ddy443. PMID: 30590525; PMCID: PMC6548229.
 - Degenhardt F, et al.; International IBD Genetics Consortium. Transethnic analysis of the human leukocyte antigen region for ulcerative colitis reveals not only shared but also ethnicity-specific disease associations. Hum Mol Genet. 2021 Apr 27;30(5):356-369. doi: 10.1093/hmg/ddab017. PMID: 33555323; PMCID: PMC8098114.
