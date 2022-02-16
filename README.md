@@ -256,8 +256,16 @@ phaseHLA: .*META.PHASING.txt</summary>
 
 ###  Add a reference
 
-To add a reference make an entry into the conf/resources.config. Model must be HIBAG model. Loci speficies the genes that are present in the HIBAG model, dict refers to the dictionary used to impute amino acid and SNP information from HLA alleles. 
+To add a reference, make an entry into conf/resources.config. 
 
+| Name  | Description |
+| ------------- | ------------- |
+| model | path to the HIBAG RData object|
+| loci | loci for which the HIBAG model was trained  |
+| dict| path to the dictionary RData object for imputation of amino acids and SNP from HLA allele information (see below) |
+| REF| reference allele (A = Absent)  |
+| ALT | alternative allele (P = Present)  |
+| COLUMNS AFTER | sample ids|
 
 ```
 	'IKMB' {
