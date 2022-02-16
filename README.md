@@ -34,7 +34,7 @@ Additional code includes:
 
 ## Installation
 
-Change the following lines in the files to fit your requirements: 
+Change the following lines in the nextflow.config files (https://www.nextflow.io/docs/latest/config.html) files to fit your requirements: 
 
 nextflow.config:
 
