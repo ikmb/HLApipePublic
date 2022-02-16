@@ -3,18 +3,29 @@
 # HLApipePublic
 
 
-This pipeline offers a workflow for HLA imputation and phasing for small datasets including
+This pipeline offers a workflow for HLA imputation using HIBAG (Zheng et al., 2014) and phasing for small datasets (Degenhardt et al., 2020) including utility scripts to evaluate the accuracy of the imputation.
 
-- alignment of a study to the imputation reference
-- HLA imputation
-- calculation of marginal probabilitites per allele of imputation results
-- calculation of alleles that have similar haplotypes
-- SNP phasing of SNPs in the HLA region (chr6:25-34Mb)
-- HLA phasing of HLA alleles.
+Preprocessing:
+- Alignment of a study to the imputation reference
 
-For genome-wide datasets general QC statistics are also calculated.
+Main:
+- HLA, Amino acid & SNP imputation
+- Phasing of HLA alleles
 
-The result is a .pdf file that informs on the general steps performed in the workflow as well as imputed and phased HLA alleles. 
+Utility: 
+- Calculation of marginal probabilitites per allele of imputation results
+- Calculation of alleles that have similar SNP haplotypes given the positions in your input data
+- Calculation of alleles that are difficult to phase given your input data
+
+Additional code includes: 
+- Preparation of SNP/AA database from IMGT
+
+## Outputs
+
+Folders: 
+alignToReference: SNPs that 
+
+
 
 ## Dependencies 
 
@@ -87,7 +98,6 @@ Others:
 ```--email```         Email address to send reports to (enclosed in '') \
 ```--outdir```        Path to output directory. Default: results.
 
-
 ## HLA reference panels
 
 ###  Add a reference
@@ -102,6 +112,10 @@ To add a reference make an entry into the conf/resources.config
 	}
   
 ```
+
+## 
+## REFERENCES
+Zheng X, Shen J, Cox C, Wakefield JC, Ehm MG, Nelson MR, Weir BS. HIBAG--HLA genotype imputation with attribute bagging. Pharmacogenomics J. 2014 Apr;14(2):192-200. doi: 10.1038/tpj.2013.18. Epub 2013 May 28. PMID: 23712092; PMCID: PMC3772955.
 
 
 
