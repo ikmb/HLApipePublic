@@ -97,15 +97,15 @@ Others:
  - PLINK file in .bed/.bim/.fam format. Assembly must be the same as the assembly of the reference. Default here hg19.
 
 ## Outputs
-
-alignToReference: .*.summary.refchecked.txt
 <details> <summary>
+alignToReference: .*.summary.refchecked.txt</summary>
+
 
 | Name  | Description |
 | ------------- | ------------- |
 | chr | chromosome in input file|
 | id | SNP id in input file  |
-</summary></details>
+</details>
 
 
 ## HLA reference panels
