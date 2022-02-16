@@ -137,9 +137,17 @@ Others:
 ```--email```         Email address to send reports to (enclosed in '') \
 ```--outdir```        Path to output directory. Default: results.
 
-
 ## Input
  - PLINK file in .bed/.bim/.fam format. Assembly must be the same as the assembly of the reference. Default here hg19.
+
+## Example file
+
+Example data are stored in the directory "example" that can be downloaded with this repository. These example data
+are trio-individuals [Utah Residents (CEPH) with Northern and Western European Ancestry (CEU)] extracted from the Hapmap Phase 3 project and HLA allele information published for these individuals in the 1000 Genomes HLA diversity panel (Gourrard et al., 2014) (extracted from ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/technical/working/20140725_hla_genotypes/20140702_hla_diversity.txt). See Degenhardt et al., 2021 for details. 
+
+```
+nextflow run HLApipePublic --prefix example/trio_CEU --reference_name GSA_Broad --run_name gsa_broad --loci DPB1,DQA1,DQB1 --shapeit SHAPEIT --impute2_reference_dir IMPUTE2_REF_DIR --do_beagle false -resume
+```
 
 ## Outputs
 NOTE: For joint analysis with original PLINK input, output files form this pipeline have to be merged with the data from the PLINK input. 
@@ -276,6 +284,8 @@ To add a reference, make an entry into conf/resources.config.
 ## Amino acid and SNP Dictionary
 
 
+
+
 ## REFERENCES
 - Degenhardt F, Wendorff M, et al. Construction and benchmarking of a multi-ethnic reference panel for the imputation of HLA class I and II alleles. Hum Mol Genet. 2019 Jun 15;28(12):2078-2092. doi: 10.1093/hmg/ddy443. PMID: 30590525; PMCID: PMC6548229.
 - Degenhardt F, et al.; International IBD Genetics Consortium. Transethnic analysis of the human leukocyte antigen region for ulcerative colitis reveals not only shared but also ethnicity-specific disease associations. Hum Mol Genet. 2021 Apr 27;30(5):356-369. doi: 10.1093/hmg/ddab017. PMID: 33555323; PMCID: PMC8098114.
@@ -286,7 +296,7 @@ To add a reference, make an entry into conf/resources.config.
 - Howie BN, Donnelly P, Marchini J. A flexible and accurate genotype imputation method for the next generation of genome-wide association studies. PLoS Genet. 2009 Jun;5(6):e1000529. doi: 10.1371/journal.pgen.1000529. Epub 2009 Jun 19. PMID: 19543373; PMCID: PMC2689936.
 - Browning BL, Zhou Y, Browning SR. A One-Penny Imputed Genome from Next-Generation Reference Panels. Am J Hum Genet. 2018 Sep 6;103(3):338-348. doi: 10.1016/j.ajhg.2018.07.015. Epub 2018 Aug 9. PMID: 30100085; PMCID: PMC6128308.
 - Di Tommaso P, Chatzou M, Floden EW, Barja PP, Palumbo E, Notredame C. Nextflow enables reproducible computational workflows. Nat Biotechnol. 2017 Apr 11;35(4):316-319. doi: 10.1038/nbt.3820. PMID: 28398311.
-
+- Gourraud PA, Khankhanian P, Cereb N, Yang SY, Feolo M, Maiers M, Rioux JD, Hauser S, Oksenberg J. HLA diversity in the 1000 genomes dataset. PLoS One. 2014 Jul 2;9(7):e97282. doi: 10.1371/journal.pone.0097282. PMID: 24988075; PMCID: PMC4079705.
 
 
 
