@@ -54,7 +54,7 @@ params {
 }
 ```
 
-base.config
+conf/base.config
 ```
  // Global cluster parameters
   cpus = { check_max( 1 * task.attempt, 'cpus' ) }
