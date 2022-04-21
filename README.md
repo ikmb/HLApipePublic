@@ -254,6 +254,7 @@ PLINK file format [https://www.cog-genomics.org/plink/1.9/].
 
 <details> <summary>
 phaseHLA: .*META.PHASING.txt</summary>
+	
 | Name  | Description |
 | ------------- | ------------- |
 | chr | chromosome in input file|
@@ -262,6 +263,7 @@ phaseHLA: .*META.PHASING.txt</summary>
 | REF| reference allele (A = Absent)  |
 | ALT | alternative allele (P = Present)  |
 | COLUMNS AFTER | sample ids|
+	
 </details>
 
 
