@@ -171,7 +171,7 @@ if(nrow(fam)> 100){
 phase = phase.tmp
 
 make_output = function(phase, locus){
-
+  locus = locus[locus%in%phase$loc]
   phase = phase[phase$loc%in%locus,]
   phase$loc = factor(phase$loc, levels=locus)
   id=paste(phase$id, phase$loc)[phase$phase_prob <0.8] # a)
@@ -214,6 +214,9 @@ make_output = function(phase, locus){
   data= cbind(info, dose)
   data = data.frame(data)
   data$id=gsub("[0-9].*\\.","", data$id)
+  id = (strsplit(as.matrix(data$id), " "))
+  id = lapply(id, function(x){names(x) = gsub("\\*.*", "", x); x= x[match(locus, names(x))]; x=paste(x, collapse=" "); return(x)})
+  data$id = unlist(id)
   return(data)
   
 }

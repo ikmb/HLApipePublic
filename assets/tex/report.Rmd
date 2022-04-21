@@ -1,6 +1,5 @@
 ---
 title: "HLA imputation report"
-author: "Mareike Wendorff & Frauke Degenhardt"
 date: "`r Sys.Date()`"
 output: 
   bookdown::html_document2:
@@ -21,7 +20,6 @@ params:
   model: "multiethnic_IKMB.RData"
   shapeit: "no shapeit"
   modules: "no modules"
-  liftover: "no liftover"
   assembly: "assembly"
   basenamerunname: "test"
 header-includes:
@@ -33,161 +31,141 @@ header-includes:
 \selectfont
 
 
-```{r style, echo = F, results="asis", cache=FALSE, message = F}
+```{r style, echo = F, results="asis", cache=FALSE, message = F, warning=FALSE}
+
 # Set knit global options
 library("knitr")
 library("rmarkdown")
-
 library("ggplot2")
+library("pdftools")
+library("magick")
+
+
 options(digits = 2, width = 80)
 golden_ratio <- (1 + sqrt(5)) / 2
 opts_chunk$set(echo = TRUE,
                tidy = FALSE,
                include = TRUE,
-               fig.width=5, 
-               fig.height=5,
-               out.width="70%",
                cache = FALSE)
-
 opts_knit$set(eval.after = "fig.cap")
 
+
 model = gsub(".*models/", "", params$model)
-pop = params$pop
 options(stringsAsFactors=F)
 
-set.seed(13)
-
-
-
-```
-# Abstract
-
-This summary gives an overview of the steps taken during the imputation of specified HLA with HIBAG [@Zheng2014]. Scripts used in this pipeline were used in
-- Degenhardt F *et al.*, Trans-ethnic analysis of the human leukocyte antigen region for ulcerative colitis reveals common disease signatures; currently under revision in the the American Journal of Human Genetics, (2020).
-If you used a reference provided by the IKMB, please also cite [@Degenhardt2019] as follows:
-- Degenhardt F, Mareike Wendorff *et al.*, "Construction and benchmarking of a multi-ethnic reference panel for the imputation of HLA class I and II alleles", *HMG*, (2019).
-
-# Data Summary
-
-```{r summary files get, echo = F, results="hide", cache=FALSE, message = F}
-bim = read.table(paste0(params$rootname,".bim"), h=F, col.names=c("CHR","","","POS","",""))
-SAMPLES = nrow(read.table(paste0(params$rootname, ".fam"), h=F))
-SNPS = tapply(bim$POS,bim$CHR,length)
-SNPS = cbind(names(SNPS), unlist(SNPS))
-colnames(SNPS) = c("CHR","#SNPS")
-NSNPS = nrow(bim)
-isliftover = params$liftover == paste0("unmappedCHR_",params$basenamerunname,".txt")
 ```
 
 
-<!-- liftover performed --> 
-```{r liftoverRef, results='asis', eval=isliftover, include=isliftover, echo=FALSE, }
-cat("# Liftover  from ", params$assembly, " to hg19 was performed\n")
-```
-```{asis, eval=isliftover, include=isliftover, echo=T, }
-We used liftOver [@Hinrichs2006] with the chainfile
-```
-```{r liftoverChain, results='asis', eval=isliftover, include=isliftover, echo=FALSE, }
-cat(params$assembly,"ToHg19.over.chain.gz",sep="")
-```
+# Details of the imputation
 
-```{r, eval=isliftover, echo =F, tidy=T}  
-failedLiftOver = read.table(params$liftover,h=T)
-#colnames(failedLiftOver)[1]="CHR"
-```  
-
-
-```{r, eval=isliftover, echo =F, tidy=T}
-# Number of variants that could not be lifted per chromosome (a detailed list can be found in unmappedSNPs.txt)
-kable(failedLiftOver,row.names=F,caption = "Number of variants that could not be lifted per chromosome (a detailed list can be found in unmappedSNPs.txt)")
-```
-
-
-\pagebreak
-# Pre imputation alignment checks
-## Model used
-```{r refcheck info alt, echo = any(grep("IKMB", model)),  results="markup", eval = any(grep("IKMB", model)),cache=FALSE, message = F}
-# ALIGNMENT TO MODEL
-model
-# POPULATION
-pop
-```
-
-```{r refcheck info, echo = !any(grep("IKMB", model)),  results="markup", eval = !any(grep("IKMB", model)),  cache=FALSE, message = F}
+Reference model used
+```{r refcheck info, echo =FALSE,  results="markup",cache=FALSE, message = F}
 # ALIGNMENT TO MODEL
 model
 
 ```
+
+
 ## Alignment of input data to reference
-```{r figure9, echo = F,  results="markup", cache=FALSE, message = F, fig.cap=c("Alignment cohort to reference BEFORE and AFTER SNPs were excluded or flipped.","%-available SNPS used in the panel per locus."), fig.pos="!ht"}
- include_graphics(paste0("refchecked_A_",params$basenamerunname,".png"))
- include_graphics(paste0("refchecked_B_",params$basenamerunname,".png"))
+Figures 1.1 and 1.2 show the alignment of the reference to the input data based on allele frequency and the overlap of positions between the reference and the input data.
+<br>
+```{r figure1, echo = F, out.width="80%",results= "markup",  cache=FALSE, message = F, fig.cap=c("Alignment cohort to reference BEFORE and AFTER SNPs were excluded or flipped."), fig.pos="!ht"}
+
+file = image_read_pdf(paste0("refchecked_A_",params$basenamerunname,".pdf"))
+par(mar=c(0,0,0,0))
+plot(file)
+```
+<br>
+```{r figure2, echo = F, out.width="80%", results="markup", cache=FALSE, message = F, fig.cap=c("Distribution of % of panel SNPs used per classifier."), fig.pos="!ht"}
+file= image_read_pdf(paste0("refchecked_B_",params$basenamerunname,".pdf") )
+par(mar=c(0,0,0,0))
+plot(file)
+```
+
+## Imputation accuracy
+Figure 1.3 shows the distribution of posterior probability of predicted genotypes (i.e for both predicted HLA alleles per locus). It shows the general imputation quality per gene. Figure 1.4 shows the marginal posterior probability per single allele and locus. 
+<br>
+```{r figure3, out.width="80%", echo = F, results="markup", cache=FALSE, message = F, fig.cap="The distribution of posterior probability of predicted genotypes given by HIBAG [@Zheng2014]", fig.pos="!ht"}
+file= image_read_pdf(paste0("postprob_",params$basenamerunname,".pdf"))
+par(mar=c(0,0,0,0))
+plot(file)
+```
+<br>
+
+```{r figure4, out.width="80%", echo = F,  results="markup", cache=FALSE, message = F, fig.cap=" The distribution of marginal posterior probabilities for each allele per locus [@Degenhardt2021]", fig.pos="!ht"}
+file= image_read_pdf(paste0("unsure_",params$basenamerunname,".pdf"))
+par(mar=c(0,0,0,0))
+plot(file)
 ```
 
 
-## SNPs excluded
-- We flipped non--ATCG SNPs of the input data set that had identical (but reverse) alleles compared to the reference (flipped).
-- We excluded non--ATCG variants of the supplied dataset, that did not match the alleles of the reference data (e.g. A/C in your dataset vs. A/T in the reference model) (excluded). 
-- We excluded an ATCG variant (+--strand annotation of input dataset assumed) that deviated in its frequency more than a value of 0.2 from the frequency of the ATCG variant stored on the reference model. We additionally excluded all ATCG variants that had a frequency around 40\% in the input dataset or the reference model. Excluded SNPs were written to `r params$checked_name`.summary.refchecked.txt. Number of changes made are printed below. 
-- For all non--ATCG and ATCG SNPs that did not fall into the above categories, we performed no action (no action). See below for info on what happend to the SNPs.
-
-
-```{r summary refcheck map get, echo = F, results="markup", cache=FALSE, message = F}
-SNPReport= as.matrix(read.table(paste0("report_refchecked_",params$basenamerunname,".txt"), h=T,sep=","))
-SNPReport[1,1] ="no action"
-SNPReport[3,1] ="excluded"
+## phaseHLACombine: Phasing certainty
+Figure 1.5 gives and overview of the quality of the phasing with certainty ranging from 0 to 1. 
+<br>
+```{r figure5, echo = F, results="markup",  out.width="80%", cache=FALSE, message = F, fig.cap="Phasing certainty across the loci. Calculated across 10 classifiers.  [@Degenhardt2021]", fig.pos="!ht"}
+file= image_read_pdf(paste0("phased_",params$basenamerunname,".pdf"))
+par(mar=c(0,0,0,0))
+plot(file)
 ```
 
-```{r, echo = F, results="markup", cache=FALSE, message = F}
-# summary refcheck map put
-kable(SNPReport,caption = "SNP report")
+```{r get PHASEOVERLAP, echo = F,  results="hide", cache=FALSE, message = F}
+res = data.frame(read.table(paste0("imputation_",params$checked_name,".META.PHASING.txt"), h=T,sep="\t"))
+N = table(paste(res$locus, res$true.geno)) # true N of allele combination
+res = res[res$phase_prob < 0.6,]
+res = table(paste(res$locus, res$true.geno)) 
+out = cbind(round(res/N[names(res)],4)*100, N[names(res)])
+
+tmp = do.call(rbind, strsplit(names(res)," "))
+alleles = cbind(AlleleA=paste0(tmp[,1],"*",tmp[,2]), 
+		AlleleB=paste0(tmp[,1], "*", tmp[,3]))
+alleles = data.frame(alleles)
+frq = read.table(paste0("imputation_",params$checked_name,".info"), h=T)
+freq = data.frame(freqAlleleA=frq$AF_ALL[match(alleles$AlleleA,gsub("imputed_HLA_", "",frq$id))],
+                  freqAlleleB=frq$AF_ALL[match(alleles$AlleleB,gsub("imputed_HLA_", "",frq$id))])
+colnames(out)=c("%","N")
+out = cbind(alleles, freq, out)
+out = out[out[,"N"]>5,]
+
 ```
 
 
-# Post imputation data overview 
-- Data were imputed using `r model` and results were written as an R--Object file to imputation_`r params$checked_name`.RData and additionally to a CSV file named impuation_`r params$checked_name`.csv
-- The posterior probabilitites of both alleles per locus and individual are stored in the RData--Object.
-- Marginal probabilities for each allele were calculated conditional on the alleles imputed for the individuals of the dataset and written together with allele frequencies to marginal_prob_`r params$checked_name`.txt and are given in a 2--field notation and a 4--field notation. 
-- Phasing was conducted using SHAPEIT2 [@Delaneau2011] and HIBAG [@Zheng2014] (Degenhardt *et al.*, under review). For this step we exclude SNPS missing for all individuals. Phasing certainty is given from 0 to 1. We suggest a threshold of 0.8 and results are written to `r params$checked_name`.all.phased.txt. Phasing was not conducted for HLA-*DRB3/4/5*, since these loci are generally difficult to phase. Please refer to the Supplementary Tables of [@Degenhardt2019] for information on which HLA-*DRB1* generally occured with wich HLA-*DRB3/4/5* in this study.
-\pagebreak
+## Lookup of measures gives an idea about the accuracies of the imputed allele
+This table shows potential problematic HLA alleles based on the SNP sequences for alleles stored in the reference dataset. Here positions that overlap between the input data and the reference were extracted and the overlap (i.e. Hemming distance = 0) between SNP haplotypes of different alleles was calculated across all classifiers (typically 100) present in the model. This table should give an idea of which alleles may be mistaken for other alleles by the model.  NClassifiers denotes in how many classifiers both alleles of an allele combination were present. One classifier may contain multiple SNP haplotypes per allele. The %- overlap states how many haplotypes stored for two alleles overlapped within one classifier. Quantiles of these overlaps are also given.
 
-## Posterior probability distribution
-
-
-```{r figure11, echo = F,  results="markup", cache=FALSE, message = F, fig.cap="The posterior probability for the different loci is a measurement given by HIBAG [@Zheng2014] about the certainty that a specific prediction is correct.", fig.pos="!ht"}
-include_graphics(paste0("postprob_",params$basenamerunname,".png"))
+```{r, echo = F,  results="hide", cache=FALSE, message = F}
+res = data.frame(read.table(paste0("imputation_overlap_alleles_", params$checked_name, ".txt"), h=T,sep="\t"))
+colnames(res) = c( "AlleleA","AlleleB", "freqAlleleA", "freqAlleleB", "0%", "25%", "50%", "75%", "100%", "NClassifiers")
+rownames(res)=NULL
 ```
 
-## Per allele marginal posterior probability
-
-```{r figure12, echo = F,  results="markup", cache=FALSE, message = F, fig.cap="The marginal posterior probability for each allele per locus.", fig.pos="!ht"}
-include_graphics(paste0("unsure_",params$basenamerunname,".png"))
-```
-  
-
-```{r get MP, echo = F,  results="hide", cache=FALSE, message = F}
-res = data.frame(read.table(paste0("marginal_prob_",params$checked_name,".txt"), h=T))
+```{r, echo = F,  results="asis", cache=FALSE, message = F}
+kable(res[res[,5] > 5,],digits = 3, caption = "Alleles for which the SNP haplotypes overlap (given the positions in the .bim file) is at minimum > 5%. Quantiles of % overlap are shown across NClassifieres. [@Degenhardt2019]")# format.args = list(scientific = TRUE),
 ```
 
-### Alleles with marginal posterior probability < 0.8
 
-Also refer to the Supplementary Tables in [@Degenhardt2019] to look up which alleles are generally difficult to impute.
+```{r, echo = F,  results="hide", cache=FALSE, message = F}
 
-```{r, echo = F,  results="markup", cache=FALSE, message = F}
-kable(res[res$prob < 0.8 & res$freq >= 0.01,],digits = 3, caption = "Alleles with a marginal posterior probability < 0.8 and an allele frequency over 1%")# format.args = list(scientific = TRUE),
+
+res = data.frame(read.table(paste0("imputation_marginal_prob_",params$checked_name,".txt"), h=T))
+res=res[res$prob < 0.8 & res$freq >= 0.01,]
+rownames(res)=NULL
 ```
 
-\pagebreak
-
-## Phasing
-
-
-```{r figure13, echo = F,  results="markup", cache=FALSE, message = F, fig.cap="Phasing certainty across the loci.", fig.pos="!ht"}
-include_graphics(paste0("phased_",params$basenamerunname,".png"))
+This table shows potential problematic HLA alleles based on marginal posterior probabilities of the imputation. 
+```{r, echo = F,  results="asis", cache=FALSE, message = F}
+kable(res,digits = 3, caption = "Alleles with a marginal posterior probability < 0.8 and an allele frequency over 1%.")
 ```
 
-## SessionInfo
-```{r sessioninfo, echo = F,  results="hide", cache=FALSE, message = F}
+This table shows which allele combinations were generally difficult to phase.
+```{r, echo = F,  results="asis", cache=FALSE, message = F}
+rownames(out) = NULL
+kable(out, caption = "% Allele combinations with phasing probability < 0.6 and total number of individuals carrying this allele combination (N)).")# format.args = list(scientific = TRUE),
+```
+
+# Software
+
+## R-packages
+```{r sessioninfo, echo = F,  results="hide", cache=FALSE, message = F, warning=F}
 
 library(parallel)
 library(ggplot2)
@@ -197,7 +175,7 @@ library(HIBAG)
 library(ggplot2)
 library(grid)
 library(gridExtra)
-
+library(reshape2)
 
 ```
 
@@ -205,17 +183,13 @@ library(gridExtra)
 sessionInfo()
 
 ```
-
-
-## Software
-
-### CLUSTER MODULES
+## CLUSTER MODULES
 
 ```{r, echo =F, results="markup"}
 unlist(strsplit(params$modules, ":"))
 ``` 
 
-### SHAPEIT
+## SHAPEIT
 ```{r, echo =F, results="markup"}
 Sys.setenv(SHAPEIT=params$shapeit)                                                                                       
 ```      
@@ -223,17 +197,9 @@ Sys.setenv(SHAPEIT=params$shapeit)
 $SHAPEIT --version
 ```
 
-### PLINK
+## PLINK
 ```{bash, echo =F, results="markup"}      
 plink --version                                                                                                                             
 ```  
 
-
-### Liftover 
-```{asis, results="markup", eval=isliftover, include=isliftover, echo=TRUE, tidy=TRUE} 
-The LiftOver was downloaded from "https://genome-store.ucsc.edu/", please cite [@Hinrichs2006].
-```
-```{noliftover_info, results="markup", eval=!isliftover, include=!isliftover, echo=TRUE, tidy=TRUE} 
-LiftOver was not used.
-```
 # References
