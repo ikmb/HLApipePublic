@@ -11,16 +11,17 @@
 
 
 ##############################################
-# Settings
+# SETTINGS
 ##############################################
 options(stringsAsFactors=F)
 library(ggplot2)
 library(data.table)
 library(reshape)
+library(parallel)
 args= commandArgs(T)
 
 ##############################################
-# Functions
+# FUNCTIONS
 ##############################################
 
 ########################################
@@ -127,14 +128,14 @@ return(res)
 }
 
 ##############################################
-# Main
+# MAIN
 ##############################################
 #files = list.files(imputed.dir, pattern=pattern, full.names=T)
 res = prep_prob(args[1])
 
 res$prob = as.numeric(res$prob)
 
-png("unsure.png")
+pdf("unsure.pdf")
 res$digits=NA
 res$digits[-grep(":", res$id)] ="2-digit"
 res$digits[grep(":", res$id)] ="4-digit"
@@ -146,14 +147,48 @@ dev.off()
 
 
 res$id= gsub("\\$","", res$id)
-write.table(res,paste("marginal_prob_", args[2],  ".txt",sep=""), sep="\t", row.names=F, quote=F, col.names=T)
+write.table(res,paste("imputation_marginal_prob_", args[2],  ".txt",sep=""), sep="\t", row.names=F, quote=F, col.names=T)
 
 # GET INFO ON ALLELE FREQUENCIES
-source(args[3])
-data = read.table(paste0("imputation_",args[2],".data"), h=T)
+load(args[3])
+source(args[4])
+
 data = data.frame(data)
 fam= read.table(paste0(args[2],".fam"), h=F, col.names = c("FID","IID","","","","PHENO"))
+frq=make.frq.hwe(data[,-(1:5)], as.numeric(as.matrix(fam$PHENO)))
+print("DONE")
+frq= data.frame(cbind(data[,1:4],frq))
+write.table(frq, paste0("imputation_", args[2],".info"), quote=F, sep="\t", row.names=F)
 
-frq=make.frq.hwe(data[,-(1:8)], as.numeric(as.matrix(fam$PHENO)))
-print(warnings())
-write.table(cbind(data[,1:8],frq), paste0("imputation_", args[2],".info"), quote=F, sep="\t", row.names=F)
+
+# GET INFO ON OVERLAPPING SNP HAPLOTYPES
+
+same = read.table(paste0("imputation_overlap_alleles_", args[2], ".txt"), h=T,sep="\t")
+colnames(same)= c("gene","alleles",  "0%", "25%", "50%", "75%", "100%", "NClassifiers")
+alleles = data.frame(AlleleA = paste0(same$gene,"*", gsub(" .*", "", same$alleles)), 
+	             AlleleB = paste0(same$gene,"*", gsub(".* ", "", same$alleles)))
+print(head(frq))
+
+freq = data.frame(freqAlleleA=frq$AF_ALL[match(alleles$AlleleA,gsub("imputed_HLA_", "",frq$id))],
+                  freqAlleleB=frq$AF_ALL[match(alleles$AlleleB,gsub("imputed_HLA_", "",frq$id))])
+same = cbind(alleles, freq, same[,-(1:2)])
+same[is.na(same)]=0
+
+same=same[!(same[,3]==0 & same[,4]==0), ]
+write.table(same,paste0("imputation_overlap_alleles_", args[2], ".txt"), row.names=F, quote=F,sep="\t")
+
+pdf("postprob.pdf")
+load(args[1])
+
+post = sapply(pred,function(x) x$value[,4])
+post = melt(post)
+
+colnames(post) <- c("sample","locus","postprob")
+
+ggplot(aes(x=postprob,color=locus), data=post) + 
+  stat_ecdf(geom="step")+
+  xlab("post prob") + ylab("proportion of posterior propability <= x") +
+  scale_y_continuous(breaks=seq(0,1,0.2),expand = c(0,0)) + scale_x_continuous(breaks=seq(0,1,0.2),expand = c(0,0)) +
+  ylim(0,1)+ theme_bw()
+
+dev.off()

@@ -1,7 +1,7 @@
 #!/usr/bin/env Rscript
 
 ##############################################
-# impute HLA alleles with HIBAG
+# Impute HLA alleles with HIBAG
 # author:  Mareike Wendorff
 # contact: m.wendorff@ikmb.uni-kiel.de
 # March 2020

@@ -263,11 +263,11 @@ r= ggplot(aes(x=X1, y=as.numeric(as.matrix(X2))), data= pos) + geom_boxplot() +
   ggtitle(paste("Study contains", sum(bim$pos%in%loc),"positions of", length(loc), "present in the used model.")) + labs(x="Locus",y="%-available SNPS used in panel") +
   theme_bw() + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + ylim(c(0,1))
           
-png("refchecked_A.png")
+pdf("refchecked_A.pdf")
 print(grid.arrange(p,q, leg,ncol=3))
 dev.off()
 
-png("refchecked_B.png")
+pdf("refchecked_B.pdf")
 print(r)
 dev.off()
 
@@ -276,11 +276,6 @@ dev.off()
 ################################################
 # WRITE OUTPUT FOR REPORT
 ################################################
-
-write.table(out, 
-            paste0(params.rootname, ".summary.refchecked.txt",sep=""), 
-            col.names=T, row.names=F, quote=F, sep="\t")
-
 
 summary = table(out$action, out$type)
 
@@ -296,3 +291,10 @@ summary = to.output(summary)
 
 
 write.table(summary,file="report.refchecked.txt",quote=F,sep=",", col.names=T, row.names=T)
+
+out = out[,c(1,2,4,5,6,11,15:18,13:14)]
+colnames(out)[7:9]=c("ref.pos", "ref.A1", "ref.A2")
+out = out[out$action!="no.action",]
+write.table(out,
+            paste0(params.rootname, ".summary.refchecked.txt",sep=""),
+            col.names=T, row.names=F, quote=F, sep="\t")

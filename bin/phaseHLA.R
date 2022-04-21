@@ -222,12 +222,13 @@ homozygous = unique(vote[vote$min_1=="-1" &!is.na(vote$min_1),"id"])
 final_vote[homozygous,3]=1
 
 output = cbind(final_vote, range)
-pred.prob=pred= pred[match(samples$ID_2[-1],pred$sample.id),"prob"]
-
+pred.prob= pred[match(samples$ID_2[-1],pred$sample.id),"prob"]
+pred.true = pred[match(samples$ID_2[-1],pred$sample.id),c("allele1", "allele2")] 
+pred.true = paste(pred.true$allele1, pred.true$allele2)
 output = data.frame(output[match(samples$ID_2[-1], rownames(output)),])
 
-out=cbind(rownames(output),gen,output, pred.prob)
-colnames(out)=c("id","locus","1","2","phase_prob", "min_diff_1", "shapeit_1","mind_diff_2","shapeit_2","pos_used","imp.prob")
+out=cbind(rownames(output),gen,output, pred.true,pred.prob)
+colnames(out)=c("id","locus","1","2","phase_prob", "min_diff_1", "shapeit_1","mind_diff_2","shapeit_2","pos_used","true.geno","imp.prob")
 
 write.table(out,file.path(out.dir,paste(name,".",gen,".HLA.phased.txt",sep="")), 
            col.names=T, row.names=F, quote=F,sep="\t")

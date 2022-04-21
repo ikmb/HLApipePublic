@@ -39,10 +39,11 @@ make.frq.hwe =function(x, case_control, hwe.bol=T){
 
   case_control= as.numeric(case_control)
   #1=control, 2=case
+  print(dim(x))
   x=t(x)
-
+  print(dim(x))
   x= apply(x,1,as.numeric)
-
+  print(dim(x))
 
   frq = data.frame(AF_ALL=apply(x,1,function(x){x=na.omit(x); return(round(sum(x)/(2*length(x)),6))}))
   frq$AF_CASE=NA
@@ -52,8 +53,6 @@ make.frq.hwe =function(x, case_control, hwe.bol=T){
   no$SAMPLES_CASE=0
   no$SAMPLES_CONTROL=0
   no$SAMPLES_UKN=0
-
-
 if(any(case_control==2) & sum(case_control==2)>1){
   frq$AF_CASE=apply(x[,case_control==2],1,function(x){x=na.omit(x); return(round(sum(x)/(2*length(x)),6))})
   no$SAMPLES_CASE = apply(x[,case_control==2],1,function(x){x=na.omit(x); return(length(x))})
@@ -72,7 +71,8 @@ if(any(case_control!=1 & case_control!=2) & (sum(case_control!=1) + sum(case_con
 
   
  if(hwe.bol & any(case_control==1) & sum(case_control==1)>1){
- hwe = data.frame( P_HWE_CONTROL = t(apply(x[,case_control==1],1,hwe.pval)))
+ hwe = data.frame( P_HWE_CONTROL = apply(x[,case_control==1],1,hwe.pval))
+print(head(hwe))
 }else{hwe=NA}
 
 return(cbind(frq,no, P_HWE_CONTROL=hwe))
@@ -87,13 +87,4 @@ translate= function(ALT, REF, dos){
   return(dos)
 }
 
-format_to_plink = function(fam, data){
-  tr = apply(data, 1, function(x){
-    translate(x[4], x[5], x[-(1:8)])
-  })
-  ped = cbind(fam, tr[match(rownames(tr),fam$IID),])
-  map = cbind(data[,c(1,2)], 0, data[,3])
-  map[,2] = gsub("\\*|:","_", map[,2])
-  return(list(ped=ped, map=map))
-}
 

@@ -6,11 +6,14 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - r=3.5.1
-  - r-base=3.5.1
+  - r
+  - r-base
   - r-reshape
   - r-reshape2
   - r-ggplot2
+  - r-cowplot
+  - r-magick
+  - r-pdftools
   - r-r.utils
   - bioconductor-hibag
   - bioconductor-snprelate

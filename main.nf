@@ -22,11 +22,12 @@ helpMessage = """
 ===============================================================================
 IKMB HLA pipeline | version ${params.version}
 ===============================================================================
-Usage:  nextflow run HLApipePublic --prefix FILE --reference_name REFERENCE --run_name NAME--shapeit SHAPEIT --impute2_reference_dir IMPUTE2_REF_DIR 
+Usage:  nextflow run HLApipePublic --prefix FILE --reference_name REFERENCE --run_name NAME --shapeit SHAPEIT --impute2_reference_dir IMPUTE2_REF_DIR 
 
 
 --prefix		An input prefix referencing a set of PLINK files
 --reference_name 	Name of the reference imputation panel (see below for details)
+--run_name		Name prefix + "_" + run_name will be used for the output
 
 Optional parameters:
 General: 
@@ -148,10 +149,9 @@ if (params.do_beagle && params.beagle == "/path/to/beagle/jar") {
 // *****************************
 
 
-LOCI = params.loci.tokenize(',') ?:  params.references[params.reference_name].loci
-
-if (!LOCI) {
-	exit 1, "Must provide loci to be analysed. Default should be in the conf/rescources.config or specified using (--loci)"
+if (!params.loci) {
+LOCI=params.references[params.reference_name].loci}else{
+LOCI= params.loci.tokenize(',')
 }
 
 
@@ -204,37 +204,25 @@ process readData {
 
 	output:
 	set file(bed_mod),file(bim_mod),file(fam_mod) into (bimbedfam_in, bimbedfam_report)
-        set file(bed_qc),file(bim_qc),file(fam_qc) into (bimbedfam_qc)
         set file(bed_phase),file(bim_phase),file(fam_phase) into (bimbedfam_phase)
     	val(base_name) into baseNameTMP
 	val(prefix) into basenameRunname
         file("split_files*") into chunks
 
 	script:
-	prefix = bed.getBaseName()
+	prefix_orig = bed.getBaseName()
+	prefix = prefix_orig + "_" + run_name
 	base_name= prefix +  "_6_29_34"
 	bed_mod = base_name + ".bed"
 	bim_mod = base_name + ".bim"
 	fam_mod = base_name + ".fam"
-	base_name_qc = prefix + ".qc"
-	bed_qc = base_name_qc + ".bed"
-	bim_qc = base_name_qc + ".bim"
-	fam_qc = base_name_qc + ".fam"
 	base_name_phase = prefix + ".phase"
 	bed_phase = base_name_phase + ".bed"
         bim_phase = base_name_phase + ".bim"
         fam_phase = base_name_phase + ".fam"
-
-	"""
-		readDataDUPLICATES.R $prefix
-		plink --bfile $prefix --exclude exclude_duplicates.txt --make-bed --out $base_name_qc                        
-		plink --allow-no-sex --bfile $base_name_qc  --chr 6 --from-mb 25 --to-mb 35 --make-bed --out $base_name_phase
-                split -l ${params.splitlnumber}  -d $fam_phase "split_files"
-                
-   
-           	plink --allow-no-sex --bfile $base_name_qc --make-bed --out $base_name_qc
-		plink --allow-no-sex --bfile $prefix  --chr 6 --from-mb 29 --to-mb 34 --make-bed --out $base_name
-
+        
+	"""	
+		readData.sh $prefix_orig $prefix ${params.splitlnumber}      
 	"""
 
 }
@@ -283,25 +271,29 @@ if (params.do_beagle) {
 
 process alignToReference {
 
+	publishDir "${params.outdir}/alignToReference", mode: 'copy', pattern: '*summary*'
+
         input:
         set file(bed),file(bim),file(fam) from bimbedfam_beagle
         val(base_name) from baseName
 	val(basenameRunname) from basenameRunname
 
         output:
+        file(out)
         set file(bed_mod),file(bim_mod),file(fam_mod) into (bimbedfam_impute, bimbedfam_impcombine, bimbedfam_phasecombine)
         val(base_checked) into checkedName
         set file(refA), file(refB), file(ref)  into report_datacheck
-
-        script:
+      
+        
+	script:
         base_checked = base_name +  ".refchecked"
         bed_mod = base_checked + ".bed"
         bim_mod = base_checked + ".bim"
         fam_mod = base_checked + ".fam"
-	refA = "refchecked_A_" + basenameRunname + ".png"
-	refB = "refchecked_B_" + basenameRunname + ".png"
+	refA = "refchecked_A_" + basenameRunname + ".pdf"
+	refB = "refchecked_B_" + basenameRunname + ".pdf"
 	ref = "report_refchecked_" + basenameRunname + ".txt"
-
+        out = base_name + ".summary.refchecked.txt"
 
         def options = ""
         if (params.subpop && (params.references == "IKMB" || params.references == "IKMB_g" || params.references == "IKMB_1KG")) {
@@ -310,8 +302,8 @@ process alignToReference {
         }
         """
                 alignToReference.R $MODEL_NAME $base_name ${options}
-		mv "refchecked_A.png" $refA
-		mv "refchecked_B.png" $refB
+		mv "refchecked_A.pdf" $refA
+		mv "refchecked_B.pdf" $refB
 		mv "report.refchecked.txt" $ref
         """
 }
@@ -329,14 +321,16 @@ process imputeHLA {
 	
 	output:
 	file(impute_result) into imputation
-	set file(impute_result),val(locus) into imp_HLA
+	set file(impute_result),val(locus) into imputation_tmp
+	file(same_result) into imputation_same
 
 	script:	
 	impute_result = "imputation_" + checked_name + "_" + locus + ".RData"
+	same_result = locus + "_" + checked_name + ".txt"
 
 	"""
 		imputeHLA.R $checked_name $MODEL_NAME $locus 
-                imputeHLA.same_haplo.R $locus $MODEL_NAME $checked_name $checked_name
+                imputeHLAhaplo.R $locus $MODEL_NAME $checked_name $checked_name
 	"""
 }
 
@@ -345,44 +339,44 @@ process imputeHLA {
 // **********
 process imputeHLACombine {
 
-	publishDir "${params.outdir}/imputeHLA", mode: 'copy'
+	publishDir "${params.outdir}/imputeHLACombine", mode: 'copy', pattern: 'imputation*'
 	
 	input:
 	file(singles) from imputation.collect()
+	file(singles_same) from imputation_same.collect()
         val(checked_name) from checkedName
 	set file(bed),file(bim),file(fam) from bimbedfam_impcombine
 	val(basenameRunname) from basenameRunname
 	
 
 	output:
-	file(result) into imputation_all
-        set file(postprob_png), file(unsure_png), file(unsure) into report_postprob
-	set file(csv_out), file(data), file(info), file(map), file(ped), file(bim), file(bed), file(fam)
-
+        set file(postprob_pdf), file(info), file(unsure_pdf), file(unsure), file(same_result) into report_postprob
+	set file(csv_out), file(data), file(info), file(map), file(ped), file(bim), file(bed), file(fam), file(same_result)
+        
 	script:	
-	result = "imputation_" + checked_name + ".RData"
-	unsure = "marginal_prob_" +  checked_name +  ".txt"
+	unsure = "imputation_marginal_prob_" +  checked_name +  ".txt"
 	csv_out = "imputation_" + checked_name +  ".csv"
-        data = "imputation_" + checked_name + ".data" 
-        data = "imputation_" + checked_name + ".HLA.data"
+        data = "imputation_" + checked_name + ".RData" 
         info = "imputation_" + checked_name + ".info"
-        nuc_data = "imputation_" + checked_name + ".nuc.data"
-        prot_data =  "imputation_" + checked_name + ".prot.data"
 	map =  "imputation_" + checked_name + ".map"
 	ped =  "imputation_" + checked_name + ".ped"
 	bim =  "imputation_" + checked_name + ".bim"
 	bed =  "imputation_" + checked_name + ".bed"
 	fam =  "imputation_" + checked_name + ".fam"
-	postprob_png = "postprob_" + basenameRunname +".png"
-	unsure_png = "unsure_" + basenameRunname + ".png"
+	same_result = "imputation_overlap_alleles_" + checked_name + ".txt"
+	postprob_pdf = "postprob_" + basenameRunname +".pdf"
+	unsure_pdf = "unsure_" + basenameRunname + ".pdf"
 	"""
-		imputeHLACombineRData.R $singles $result
-                imputeHLACombineCSV.R $result $checked_name
-		imputeHLACombinePLOT.R $result
-		imputeHLACombinePLINK.R $result $checked_name $params.supplementary_dir/location_HLA_genes_hg19.txt $DICTIONARY
-                imputeHLACombineINFO.R $result $checked_name $params.bin_dir/utilityFUNCTIONS.R
-		mv "postprob.png" $postprob_png
-		mv "unsure.png" $unsure_png
+           	imputeHLACombineRData.R $singles $checked_name $params.supplementary_dir/location_HLA_genes_hg19.txt $DICTIONARY
+		imputeHLACombineCSV.R $singles $checked_name
+		imputeHLACombinePLINK.R $checked_name $params.bin_dir/utilityFUNCTIONS.R
+                
+		cat $singles_same > tmp.txt
+                cat <(head -1 tmp.txt) <(grep -v gene tmp.txt) > $same_result
+                imputeHLACombineINFO.R tmp.RData $checked_name $data $params.bin_dir/utilityFUNCTIONS.R
+
+		mv "postprob.pdf" $postprob_pdf
+		mv "unsure.pdf" $unsure_pdf
 	"""	
 }
 
@@ -429,15 +423,13 @@ process phaseSNPs {
 
 process phaseHLA {
 
-//	publishDir "${params.outdir}/phasedHLA/Loci", mode: 'copy'
-
 	input:
         each name from phased_name.collect()        
 //	set file(haps), file(sample), file(certainty) from phased
         file(haps_tmp) from phased_haps.collect()
         file(sample_tmp) from phased_sample.collect()
         file(correlation_tmp) from phased_correlation.collect()
-	set file(imputed), val(locus) from imp_HLA
+	set file(imputed), val(locus) from imputation_tmp
 
 	output:
 	file(phase_txt) into phasedHLA
@@ -463,7 +455,7 @@ process phaseHLA {
 
 process phaseHLACombine {
 
-	publishDir "${params.outdir}/phasedHLA", mode: 'copy'
+	publishDir "${params.outdir}/phaseHLAcombine", mode: 'copy', pattern: 'imputation*'
 
 	input:
 	file singles from phasedHLA.collect()
@@ -473,27 +465,28 @@ process phaseHLACombine {
 
 	output:
 	file(phased_result)
-	file(phased_png) into report_phasing
+	set file(phased_pdf), file(phased_result) into report_phasing
         set file(data), file(info), file(map), file(ped), file(bim), file(bed), file(fam)
         file(phased_comb)
 
 	script:
-        phased_comb = checked_name + ".phased.csv"
-        phased_result = checked_name + ".HLA.all.phased.txt"
-        data = "imputation_" + checked_name + ".haplotypes.data"
+        phased_comb = "imputation_" + checked_name + ".phased.csv"
+        phased_result = "imputation_" + checked_name + ".META.PHASING.txt"
+        data = "imputation_" + checked_name + ".haplotypes.RData"
         info = "imputation_" + checked_name + ".haplotypes.info"
-	phased_png = "phased_" + basenameRunname + ".png"
+	phased_pdf = "phased_" + basenameRunname + ".pdf"
         map =  "imputation_" + checked_name + ".haplotypes.map"
         ped =  "imputation_" + checked_name + ".haplotypes.ped"
         bim =  "imputation_" + checked_name + ".haplotypes.bim"
         bed =  "imputation_" + checked_name + ".haplotypes.bed"
         fam =  "imputation_" + checked_name + ".haplotypes.fam"
 	"""
-		phaseHLACombine.R ${singles} $phased_result
+		phaseHLACombineMETA.R ${singles} $phased_result
+		phaseHLACombineRData.R $checked_name
 		phaseHLACombinePLINK.R $checked_name $params.bin_dir/utilityFUNCTIONS.R
                 phaseHLACombineCSV.R $data $phased_comb
                 phaseHLACombineINFO.R $checked_name $data $params.bin_dir/utilityFUNCTIONS.R
-		mv "phased.png" $phased_png
+		mv "phased.pdf" $phased_pdf
 	"""
 }
 
@@ -508,9 +501,9 @@ process report {
     
     input:
     set file(figrefcheckA),file(figrefcheckAB), file(tabrefcheck) from report_datacheck
-    set file(postprob), file(unsurepng), file(unsuretxt) from report_postprob
+    set file(postprob), file(info), file(unsure_pdf), file(unsure_txt), file(haplo) from report_postprob
     file(phased) from report_phasing
-    set file(bim), file(bed), file(fam) from inputFiles
+    set file(bim), file(bed), file(fam) from bimbedfam_report
     val(checked_name) from checkedName
     val(base_name) from baseName
     val(basenameRunname) from basenameRunname
