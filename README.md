@@ -251,10 +251,6 @@ PLINK file format [https://www.cog-genomics.org/plink/1.9/].
 <details> <summary>
 phaseHLA: .*META.PHASING.txt</summary>
 	
-	
-		locus		X2	phase_prob	min_diff_1	shapeit_1	mind_diff_2	shapeit_2	pos_used	true.geno	imp.prob
-
-	
 | Name  | Description |
 | ------------- | ------------- |
 | IID | sample id |
