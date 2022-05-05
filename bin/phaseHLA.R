@@ -228,7 +228,7 @@ pred.true = paste(pred.true$allele1, pred.true$allele2)
 output = data.frame(output[match(samples$ID_2[-1], rownames(output)),])
 
 out=cbind(rownames(output),gen,output, pred.true,pred.prob)
-colnames(out)=c("id","locus","1","2","phase_prob", "min_diff_1", "shapeit_1","mind_diff_2","shapeit_2","pos_used","true.geno","imp.prob")
+colnames(out)=c("IID","locus","X1","X2","phase_prob", "min_diff_1", "shapeit_1_prob","mind_diff_2","shapeit_2_prob","pos_used","true_geno","imputation_prob")
 
 write.table(out,file.path(out.dir,paste(name,".",gen,".HLA.phased.txt",sep="")), 
            col.names=T, row.names=F, quote=F,sep="\t")
