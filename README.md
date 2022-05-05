@@ -201,7 +201,7 @@ imputeHLA: .*overlap_alleles.*.txt</summary>
 </details>
 
 <details> <summary>
-imputeHLA/phaseHLA: .*info</summary>
+phaseHLA: .*info</summary>
 	
 | Name  | Description |
 | ------------- | ------------- |
@@ -216,7 +216,7 @@ imputeHLA/phaseHLA: .*info</summary>
 </details>
 
 <details> <summary>
-imputeHLA/phaseHLA: .*RData</summary>
+phaseHLA: .*RData</summary>
 	
 | Name  | Description |
 | ------------- | ------------- |
@@ -227,28 +227,24 @@ imputeHLA/phaseHLA: .*RData</summary>
 | ALT | alternative allele (P = Present)  |
 | COLUMNS AFTER | sample ids|
 
-For each sample the dose 0,1,2 of presence (P) of the allele is given.
+For each sample the dose 0,1,2 of presence (P) of the allele is given. Haplotypes were only constructed for alleles with a phasing cerainty > 0.8 per sample (i.e. if one allele in a haplotype had phasing certainty <0.8 the whole haplotype was not built). 
 </details>
 
 
 <details> <summary>
-imputeHLA/phaseHLA: .*csv</summary>
+phaseHLA: .*csv</summary>
 	
 | Name  | Description |
 | ------------- | ------------- |
-| chr | chromosome in input file|
-| id | of HLA allele or HLA haplotype  |
-| pos | position (bp)  |
-| REF| reference allele (A = Absent)  |
-| ALT | alternative allele (P = Present)  |
-| COLUMNS AFTER | sample ids|
+| IID |	sample id | 
+| haplotype | both parental haplotypes for different HLA genes | 
 
-For each sample the dose 0,1,2 of presence (P) of the allele is given.
+Haplotypes were only constructed for alleles with a phasing cerainty > 0.8 per sample (i.e. if one allele in a haplotype had phasing certainty <0.8 the whole haplotype was not built).
 </details>
 
 
 <details> <summary>
-imputeHLA/phaseHLA: .*ped/.map/.bed/.bim/.fam </summary>
+phaseHLA: .*ped/.map/.bed/.bim/.fam </summary>
 PLINK file format [https://www.cog-genomics.org/plink/1.9/].
 </details>
 
@@ -257,13 +253,20 @@ phaseHLA: .*META.PHASING.txt</summary>
 	
 | Name  | Description |
 | ------------- | ------------- |
-| chr | chromosome in input file|
-| id | of HLA allele or HLA haplotype  |
-| pos | position (bp)  |
-| REF| reference allele (A = Absent)  |
-| ALT | alternative allele (P = Present)  |
-| COLUMNS AFTER | sample ids|
-	
+| IID | sample id |
+| locus | HLA locus  |
+| X1 | HLA allele assigned to parental chromosome 1 |
+| X2 | HLA allele assigned to parental chromosome 2  |
+| true_geno | the real (but unphased) HLA alleles; if phasing did not work X1 may be equal to X2|
+| phase_prob | phasing probability  |
+| min_diff_1 | median minimal hemming distance for genotyped/phased (SHAPEIT) SNP haplotypes of X1 to SNP haplotypes stored in the HIBAG model; [min,max]|  
+| min_diff_2 | see above but for X2 | 
+| pos_used |  median number of SNP positions used to make the assignments for X1 and X2; [min, max] |
+| shapeit_1/2_prob| median minimal phasing probability (SHAPEIT) of genotyped SNPs within the gene locus; [min,max] |
+| imputation_prob| HIBAG post-imputation probability for the HLA genotype (true.geno) |
+
+
+All given statistics are per sample statistics.
 </details>
 
 
