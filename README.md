@@ -257,13 +257,13 @@ phaseHLA: .*META.PHASING.txt</summary>
 | locus | HLA locus  |
 | X1 | HLA allele assigned to parental chromosome 1 |
 | X2 | HLA allele assigned to parental chromosome 2  |
-| true.geno | the real (but unphased) HLA alleles; if phasing did not work X1 may be equal to X2|
+| true_geno | the real (but unphased) HLA alleles; if phasing did not work X1 may be equal to X2|
 | phase_prob | phasing probability  |
 | min_diff_1 | median minimal hemming distance for genotyped/phased (SHAPEIT) SNP haplotypes of X1 to SNP haplotypes stored in the HIBAG model; [min,max]|  
 | min_diff_2 | see above but for X2 | 
 | pos_used |  median number of SNP positions used to make the assignments for X1 and X2; [min, max] |
-| shapeit.prob| median minimal phasing probability (SHAPEIT) of genotyped SNPs within the gene locus; [min,max] |
-| imputation.prob| HIBAG post-imputation probability for the HLA genotype (true.geno) |
+| shapeit_1/2_prob| median minimal phasing probability (SHAPEIT) of genotyped SNPs within the gene locus; [min,max] |
+| imputation_prob| HIBAG post-imputation probability for the HLA genotype (true.geno) |
 
 
 All given statistics are per sample statistics.
