@@ -100,7 +100,7 @@ conf/base.config
 conda env create -f environment.yml
 conda activate hla-pipe-1.0
 ```
-- Download plink.chr6.GRCh37.map from [https://bochet.gcc.biostat.washington.edu/beagle/genetic_maps/ and place it into assets/beagle_map/]
+- Download plink.chr6.GRCh37.map from [https://bochet.gcc.biostat.washington.edu/beagle/genetic_maps/] and place it into assets/beagle_map/
 
 
 ## Usage
