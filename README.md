@@ -30,7 +30,7 @@ Additional code includes:
 - Beagle map plink.chr6.GRCh37.map [http://bochet.gcc.biostat.washington.edu/beagle/genetic_maps/]
 - PLINK 1.9 [https://www.cog-genomics.org/plink/1.9/]
 - R (version 3.5+)
-- R packages: parallel, ggplot2, data.table, reshape, reshape2, HIBAG, SNPRelate, grid, gridExtra, knitR, R.utils
+- R packages: as specified in environment.yml
 
 ## Installation
 
