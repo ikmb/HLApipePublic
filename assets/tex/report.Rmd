@@ -64,8 +64,6 @@ Reference model used
 model
 
 ```
-
-
 ## Alignment of input data to reference
 Figures 1.1 and 1.2 show the alignment of the reference to the input data based on allele frequency and the overlap of positions between the reference and the input data.
 <br>
@@ -110,14 +108,14 @@ plot(file)
 
 ```{r get PHASEOVERLAP, echo = F,  results="hide", cache=FALSE, message = F}
 res = data.frame(read.table(paste0("imputation_",params$checked_name,".META.PHASING.txt"), h=T,sep="\t"))
-N = table(paste(res$locus, res$true.geno)) # true N of allele combination
+N = table(paste(res$locus, res$true_geno)) # true N of allele combination
 res = res[res$phase_prob < 0.6,]
-res = table(paste(res$locus, res$true.geno)) 
+res = table(paste(res$locus, res$true_geno)) 
 out = cbind(round(res/N[names(res)],4)*100, N[names(res)])
 
 tmp = do.call(rbind, strsplit(names(res)," "))
 alleles = cbind(AlleleA=paste0(tmp[,1],"*",tmp[,2]), 
-		AlleleB=paste0(tmp[,1], "*", tmp[,3]))
+		AlleleB=paste0(tmp[,2], "*", tmp[,3]))
 alleles = data.frame(alleles)
 frq = read.table(paste0("imputation_",params$checked_name,".info"), h=T)
 freq = data.frame(freqAlleleA=frq$AF_ALL[match(alleles$AlleleA,gsub("imputed_HLA_", "",frq$id))],
@@ -142,10 +140,7 @@ rownames(res)=NULL
 kable(res[res[,5] > 5,],digits = 3, caption = "Alleles for which the SNP haplotypes overlap (given the positions in the .bim file) is at minimum > 5%. Quantiles of % overlap are shown across NClassifieres. [@Degenhardt2019]")# format.args = list(scientific = TRUE),
 ```
 
-
 ```{r, echo = F,  results="hide", cache=FALSE, message = F}
-
-
 res = data.frame(read.table(paste0("imputation_marginal_prob_",params$checked_name,".txt"), h=T))
 res=res[res$prob < 0.8 & res$freq >= 0.01,]
 rownames(res)=NULL

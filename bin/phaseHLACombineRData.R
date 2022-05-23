@@ -45,21 +45,21 @@ make_output = function(phase, locus, fam){
   locus = locus[locus%in%phase$loc] # get locus
   phase = phase[phase$loc%in%locus,] # get locus
   phase$loc = factor(phase$loc, levels=locus)
-  id=paste(phase$id, phase$loc)[phase$phase_prob <0.8] # a)
-  phase[paste(phase$id, phase$loc)%in%id ,c("X1","X2")]=NA
+  id=paste(phase$IID, phase$loc)[phase$phase_prob <0.8] # a)
+  phase[paste(phase$IID, phase$loc)%in%id ,c("X1","X2")]=NA
   phase = data.frame(phase)
   phase[c(grep("/", phase$X1), grep("/", phase$X2)),c("X1","X2")] = NA
   phase$chr1 = paste(phase$locus, phase$X1,sep="*") # b)
   phase$chr2 = paste(phase$locus, phase$X2,sep="*") # b)
+  print(head(phase))
+  phase=phase[phase$IID%in%fam$IID,]
   
-  phase=phase[phase$id%in%fam$IID,]
   
-  
-  phase = phase[, c("id","locus", "chr1","chr2")]
+  phase = phase[, c("IID","locus", "chr1","chr2")]
   
   print(head(phase))
-  data = rbind(do.call(rbind,tapply(phase$chr1, phase$id, invisible)),
-               do.call(rbind,tapply(phase$chr2, phase$id, invisible)))
+  data = rbind(do.call(rbind,tapply(phase$chr1, phase$IID, invisible)),
+               do.call(rbind,tapply(phase$chr2, phase$IID, invisible)))
   
   comb=list(1:length(locus))
   print(comb)
