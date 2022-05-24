@@ -95,10 +95,11 @@ conf/base.config
 
 ```
 
-Running the Pipeline in a cluster system. Edit your $HOME/.nextflow.config as follows:
+Running the Pipeline in a cluster system. Edit your $HOME/.nextflow/config as follow (if this file does not exist yet, create it):
 
 ```
-// bind work directories (i.e. work_ifs). If you need more than $HOME and work_ifs, add another "-B /somewhere" switch.
+// bind work directories (i.e. work_ifs). 
+// If you need more than $HOME and work_ifs, add another "-B /somewhere" switch.
 singularity.runOptions = "-B /work_ifs"
 
 // make nextflow use slurm by default, specify the right queue size and the queue name
@@ -110,6 +111,7 @@ profiles {
         process.queue = "all"
     }
 }
+
 ```
 
 - R packages and PLINK can be installed using anaconda and 
