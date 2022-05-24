@@ -95,7 +95,7 @@ conf/base.config
 
 ```
 
-Running the Pipeline in a cluster system
+Running the Pipeline in a cluster system. Edit your $HOME/.nextflow.config as follows:
 
 ```
 // bind work directories (i.e. work_ifs). If you need more than $HOME and work_ifs, add another "-B /somewhere" switch.
