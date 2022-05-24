@@ -34,7 +34,7 @@ Additional code includes:
 
 ## Installation
 
-Change the following lines in the nextflow.config files (https://www.nextflow.io/docs/latest/config.html) files to fit your requirements. Especially make sure that the time limit of your computing cluster allows the max_time runtime.
+Change the following lines in the nextflow.config files (https://www.nextflow.io/docs/latest/config.html) files to fit your requirements. Especially make sure that the time limit of your computing cluster allows the max_time runtime and that the storage (memory) and CPU requirements fit.
 
 nextflow.config:
 
@@ -93,6 +93,23 @@ conf/base.config
         time = { check_max( 48.h * task.attempt, 'time' ) }
   }
 
+```
+
+Running the Pipeline in a cluster system
+
+```
+// bind work directories (i.e. work_ifs). If you need more than $HOME and work_ifs, add another "-B /somewhere" switch.
+singularity.runOptions = "-B /work_ifs"
+
+// make nextflow use slurm by default, specify the right queue size and the queue name
+profiles {
+    standard {
+        executor.name = "slurm"
+        executor.queueSize = 150
+        process.executor = "slurm"
+        process.queue = "all"
+    }
+}
 ```
 
 - R packages and PLINK can be installed using anaconda and 
