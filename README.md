@@ -30,11 +30,11 @@ Additional code includes:
 - Beagle map plink.chr6.GRCh37.map [http://bochet.gcc.biostat.washington.edu/beagle/genetic_maps/]
 - PLINK 1.9 [https://www.cog-genomics.org/plink/1.9/]
 - R (version 3.5+)
-- R packages: parallel, ggplot2, data.table, reshape, reshape2, HIBAG, SNPRelate, grid, gridExtra, knitR, R.utils
+- R packages: as specified in environment.yml
 
 ## Installation
 
-Change the following lines in the nextflow.config files (https://www.nextflow.io/docs/latest/config.html) files to fit your requirements. Especially make sure that the time limit of your computing cluster allows the max_time runtime.
+Change the following lines in the nextflow.config files (https://www.nextflow.io/docs/latest/config.html) files to fit your requirements. Especially make sure that the time limit of your computing cluster allows the max_time runtime and that the storage (memory) and CPU requirements fit.
 
 nextflow.config:
 
@@ -95,12 +95,31 @@ conf/base.config
 
 ```
 
-- R packages and PLINK can be installed using anaconda and ``
+Running the Pipeline in a cluster system. Edit your $HOME/.nextflow/config as follow (if this file does not exist yet, create it):
+
+```
+// bind work directories (i.e. work_ifs). 
+// If you need more than $HOME and work_ifs, add another "-B /somewhere" switch.
+singularity.runOptions = "-B /work_ifs"
+
+// make nextflow use slurm by default, specify the right queue size and the queue name
+profiles {
+    standard {
+        executor.name = "slurm"
+        executor.queueSize = 150
+        process.executor = "slurm"
+        process.queue = "all"
+    }
+}
+
+```
+
+- R packages and PLINK can be installed using anaconda and 
 ```
 conda env create -f environment.yml
 conda activate hla-pipe-1.0
 ```
-- Download the plink.chr6.GRCh37.map and place it into assets/beagle_map/
+- Download plink.chr6.GRCh37.map from [https://bochet.gcc.biostat.washington.edu/beagle/genetic_maps/] and place it into assets/beagle_map/
 
 
 ## Usage

@@ -16,7 +16,6 @@ dependencies:
   - r-pdftools
   - r-r.utils
   - bioconductor-hibag
-  - bioconductor-snprelate
   - r-gridextra
   - r-gridbase
   - plink=1.90b6.12
