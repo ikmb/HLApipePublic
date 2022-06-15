@@ -108,37 +108,31 @@ plot(file)
 
 ```{r get PHASEOVERLAP, echo = F,  results="hide", cache=FALSE, message = F}
 res = data.frame(read.table(paste0("imputation_",params$checked_name,".META.PHASING.txt"), h=T,sep="\t"))
-N = table(paste(res$locus, res$true_geno)) # true N of allele combination
+total = length(unique(res$IID))
+N = table(paste(res$locus, res$true_geno)) # number of times this allele combination occured
+
 res = res[res$phase_prob < 0.6,]
-res = table(paste(res$locus, res$true_geno)) 
-out = cbind(round(res/N[names(res)],4)*100, N[names(res)])
+res = table(paste(res$locus, res$true_geno)) # number of times this allele combinadtion had phasing probability < 0.6
+out = cbind(round(res/N[names(res)],4)*100, round(N[names(res)]/total,4)*100)
 
 tmp = do.call(rbind, strsplit(names(res)," "))
 alleles = cbind(AlleleA=paste0(tmp[,1],"*",tmp[,2]), 
-		AlleleB=paste0(tmp[,2], "*", tmp[,3]))
+		AlleleB=paste0(tmp[,1], "*",tmp[,3]))
 alleles = data.frame(alleles)
 frq = read.table(paste0("imputation_",params$checked_name,".info"), h=T)
 freq = data.frame(freqAlleleA=frq$AF_ALL[match(alleles$AlleleA,gsub("imputed_HLA_", "",frq$id))],
                   freqAlleleB=frq$AF_ALL[match(alleles$AlleleB,gsub("imputed_HLA_", "",frq$id))])
-colnames(out)=c("%","N")
+colnames(out)=c("%(phasing probability < 0.6)","%N")
+ind = out[,1] > 1 & out[,2] > 1
 out = cbind(alleles, freq, out)
-out = out[out[,"N"]>5,]
+out = out[ind,]
 
 ```
 
 
 ## Lookup of measures gives an idea about the accuracies of the imputed allele
-This table shows potential problematic HLA alleles based on the SNP sequences for alleles stored in the reference dataset. Here positions that overlap between the input data and the reference were extracted and the overlap (i.e. Hemming distance = 0) between SNP haplotypes of different alleles was calculated across all classifiers (typically 100) present in the model. This table should give an idea of which alleles may be mistaken for other alleles by the model.  NClassifiers denotes in how many classifiers both alleles of an allele combination were present. One classifier may contain multiple SNP haplotypes per allele. The %- overlap states how many haplotypes stored for two alleles overlapped within one classifier. Quantiles of these overlaps are also given.
+This table shows potential problematic HLA alleles based on the SNP sequences for alleles stored in the reference dataset. Here positions that overlap between the input data and the reference were extracted and the overlap (i.e. Hemming distance = 0) between SNP haplotypes of different alleles was calculated across all classifiers (typically 100) present in the model. This table should give an idea of which alleles may be mistaken for other alleles by the model.  NClassifiers denotes in how many classifiers both alleles of an allele combination were present. One classifier may contain multiple SNP haplotypes per allele. The %-overlap states how many haplotypes stored for two alleles overlapped within one classifier. Quantiles of these overlaps are also given.
 
-```{r, echo = F,  results="hide", cache=FALSE, message = F}
-res = data.frame(read.table(paste0("imputation_overlap_alleles_", params$checked_name, ".txt"), h=T,sep="\t"))
-colnames(res) = c( "AlleleA","AlleleB", "freqAlleleA", "freqAlleleB", "0%", "25%", "50%", "75%", "100%", "NClassifiers")
-rownames(res)=NULL
-```
-
-```{r, echo = F,  results="asis", cache=FALSE, message = F}
-kable(res[res[,5] > 5,],digits = 3, caption = "Alleles for which the SNP haplotypes overlap (given the positions in the .bim file) is at minimum > 5%. Quantiles of % overlap are shown across NClassifieres. [@Degenhardt2019]")# format.args = list(scientific = TRUE),
-```
 
 ```{r, echo = F,  results="hide", cache=FALSE, message = F}
 res = data.frame(read.table(paste0("imputation_marginal_prob_",params$checked_name,".txt"), h=T))
@@ -151,11 +145,19 @@ This table shows potential problematic HLA alleles based on marginal posterior p
 kable(res,digits = 3, caption = "Alleles with a marginal posterior probability < 0.8 and an allele frequency over 1%.")
 ```
 
-This table shows which allele combinations were generally difficult to phase.
-```{r, echo = F,  results="asis", cache=FALSE, message = F}
-rownames(out) = NULL
-kable(out, caption = "% Allele combinations with phasing probability < 0.6 and total number of individuals carrying this allele combination (N)).")# format.args = list(scientific = TRUE),
+```{r, echo = F,  results="hide", cache=FALSE, message = F}
+res = data.frame(read.table(paste0("imputation_overlap_alleles_", params$checked_name, ".txt"), h=T,sep="\t"))
+colnames(res) = c( "AlleleA","AlleleB", "freqAlleleA", "freqAlleleB", "0%", "25%", "50%", "75%", "100%", "NClassifiers")
+rownames(res)=NULL
+res = res[res[,5] > 0,]
+res = res[order(res[,5], decreasing=T),]
+rownames(res)=NULL
 ```
+
+```{r, echo = F,  results="asis", cache=FALSE, message = F}
+kable(head(res,50),digits = 3, caption = "Alleles for which SNP haplotypes overlap in all classifiers (given the positions in the .bim file). Quantiles of % overlap are shown across NClassifieres. If more than 50 allele combinadtions are problematic, the top 50 are shown [@Degenhardt2019]")# format.args = list(scientific = TRUE),
+```
+
 
 # Software
 
