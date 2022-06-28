@@ -1,5 +1,6 @@
 ![](images/ikmb_bfx_logo.png)
 
+NOTE: THIS IS A BETA VERSION AND SOME THINGS STILL NEED TO BE UPDATED (I.E. AMINO ACID POSITIONS)
 # HLApipePublic
 
 
