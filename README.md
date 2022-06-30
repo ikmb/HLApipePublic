@@ -1,6 +1,9 @@
 ![](images/ikmb_bfx_logo.png)
 
+
+
 NOTE: THIS IS A BETA VERSION AND SOME THINGS STILL NEED TO BE UPDATED (I.E. AMINO ACID POSITIONS)
+ 
 # HLApipePublic
 
 
@@ -10,7 +13,7 @@ Preprocessing:
 - Alignment of a study to the imputation reference
 
 Main:
-- HLA, Amino acid (AA) & SNP imputation
+- HLA, Amino acid (AA) & SNP imputation (Note that DRB3/4/5 positions were mapped to DRB1 for sake of simplicity; the last 3 AA of DRB1/3/4/5 and DQB1 are mapped to position 0, they are not present in the nucleotide reference of the genes)
 - Phasing of HLA alleles
 
 Utility: 
@@ -170,6 +173,8 @@ nextflow run HLApipePublic --prefix example/trio_CEU --reference_name GSA_Broad 
 ```
 
 ## Output formats
+Imputed HLA alleles, SNPs and amino acids. Notation: alleles A*01:01 corresponds to imputed_A_01_01. nucleotides: imputed_gene_hg19bp_alelle1_allele2; prot: imputed_gene_AAposition_allele1_allele2. For multiallelic markers: allele2 is a list of the alternatives (separated by "or" to the reference allel1). For prot: the position of the AA was mapped back to the genome. 
+
 NOTE: For joint analysis with original PLINK input, output files form this pipeline have to be merged with the data from the PLINK input. 
 
 
