@@ -176,9 +176,10 @@ nextflow run HLApipePublic --prefix example/trio_CEU --reference_name GSA_Broad 
 Imputed HLA alleles, SNPs and amino acids. 
 
 **Notation**: 
+
 *alleles*: A*01:01 corresponds to imputed_A_01_01. 
 *nucleotides*: imputed_gene_hg19bp_alelle1_allele2; 
-*prot*: imputed_gene_AAposition_allele1_allele2. For multiallelic markers: allele2 is a list of the alternatives (separated by "or" to the reference allel1).
+*prot*: imputed_gene_AAposition_allele1_allele2. For multiallelic markers: allele2 is a list of the alternatives (separated by "or" to the reference allele1).
 For prot: the position of the AA was mapped back to the genome. 
 
 NOTE: For joint analysis with original PLINK input, output files form this pipeline have to be merged with the data from the PLINK input. 
