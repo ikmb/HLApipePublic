@@ -145,10 +145,6 @@ assign.SNP.PROT_prepare=function(data, info, fam, type){
 
 assign.SNP.PROT=function(tmp){   
   # MAKE TO DOSAGE
-  if(any(-grep("[I]",out[,1]))){
-    tmp = out[-grep("[I]",out[,1]),] 
-  }
-  #
   row.names=tmp[,1]
   
   tmp = tmp[,-(1:2)]
@@ -156,26 +152,41 @@ assign.SNP.PROT=function(tmp){
   ###################################
   # Get the major and minor allele
   ##################################
-  maj=apply(tmp,1,function(x){x=(unlist(strsplit(x,""))); 
-  
-  x[x==0]=NA; 
-  x=(sort(table(x), decreasing=T))
-  x=names(x)
-  if(length(x)==0){ #If monomorphic set 0
-            return(c("0","0"))
+  maj=apply(tmp,1,function(x){
+    if(any(nchar(x)>2)){#Set InDels to missing
+      return(c(NA,NA))
+    }
+        
+    x=(unlist(strsplit(x,""))); 
+    
+    x[x==0]=NA; 
+    x=(sort(table(x), decreasing=T))
+    x=names(x)
+    if(length(x)==0){ #If monomorphic set 0
+              return(c("0","0"))
+    }
+    if(length(x)==1){ #If monomorphic set 0
+      return(c(x,"0"))
+    }
+    if(length(x)==2){ #If biallelic return both alleles sorted
+      return(x)
+    }
+    if(length(x)>2){ #If multiallelic return each allele separately
+      paste(x,"")
+      return(sapply(1:length(x),function(i) c(x[i],paste(x[-i],collapse = "or"))))
+  #    return(c(NA,NA))
+  }}) 
+  if(is.list(maj)){
+    nvariants = sapply(maj,function(x) if(is.vector(x)){1}else{ncol(x)})
+    row.names = rep(row.names, times=nvariants)
+    maj=matrix(unlist(maj),ncol=2,byrow = T)
+    tmp = tmp[rep(1:nrow(tmp),times=nvariants),]
+    row.names = paste(row.names,maj[,1],maj[,2],sep="_")
+  } else {
+    warning('unexpected old pathway. To reuse change line:  res = c(6,x[1],gsub(".*_([-0-9]+)_.*", "\\1",x[1]),al,to.dosage(x[-1],al[1]))')
+#    nvariants = rep(1,ncol(maj))
+#    maj=t(maj)
   }
-  if(length(x)==1){ #If monomorphic set 0
-    return(c(x,"0"))
-  }
-  if(length(x)==2){ #If biallelic return both alleles sorted
-    return(x)
-  }
-  if(length(x)>2){ #Set InDels to missing
-    return(c(NA,NA))
-  }})                                    
-  
-  
-  maj=t(maj)
   
   rownames(maj) =row.names
   
@@ -185,19 +196,35 @@ assign.SNP.PROT=function(tmp){
   
   data = apply(cbind(row.names,tmp),1,function(x){
     al = maj[x[1], ]
+
     res = c()
     if(!is.na(al[1]) & al[1]!="0"){
-      res = c(6,x[1],gsub(".*_", "",x[1]),al,to.dosage(x[-1],al[1]))
+      if(grepl("prot",x[1])){
+        protpos = gsub(".*_([-0-9]+)_.*", "\\1",x[1])
+        locus=gsub(".*_([A-Z1-9]+)_[-0-9]+_.*", "\\1",x[1])
+        nuc_pos = prot_pos(protpos,locus,prot,nuc2dig)
+        res = c(6,x[1],nuc_pos,al,to.dosage(x[-1],al[1]))
+      } else {
+        res = c(6,x[1],gsub(".*_([-0-9]+)_.*", "\\1",x[1]),al,to.dosage(x[-1],al[1]))
+      }
       return(res)
     }else{
       return(NULL)
     }
-  }    
+  }  
   )
-  data = do.call(rbind,data)
-  
+  if(is.list(data)){
+    data = do.call(rbind,data)
+  } else{
+    data= t(data)
+  }
   colnames(data)[1:5] = c("chr","id","pos","REF","ALT")
-  
+
+  #switch ref and alt allele in multiallelic sites so dosages sum up to 2
+  orAllelesREF = data[grepl("or",data[,"ALT"]),]
+  orAllelesREF[,c("REF","ALT")] = c("A","P")#orAllelesREF[,c("ALT","REF")]
+  orAllelesREF[,-(1:5)] = 2- as.numeric(orAllelesREF[,-(1:5)])
+  data[grepl("or",data[,"ALT"]),] = orAllelesREF
   return(data)
 } 
 
@@ -217,6 +244,22 @@ format_to_plink = function(fam, data){
   map = cbind(data[,c(1,2)], 0, data[,3])
   map[,2] = gsub("\\*|:","_", map[,2])
   return(list(ped=ped, map=map))
+}
+
+prot_pos = function(protpos, locus,prot,nuc2dig){
+  locus = gsub("DRB[1345]","DRB",locus)
+  if((as.numeric(protpos)>=227 & locus == "DQB1") | (as.numeric(protpos)>=235 & locus == "DRB")){#positions not included in nuc reference
+    return("0")
+    }else{
+    strand = data.frame(locus = c("A","B","C","DPA1","DPB1","DQA1","DQB1","DRB1"), strand=c("+","-","-","-","+","+","-","-"))
+    pos_translation = if(strand$strand[grepl(paste0("^",locus),strand$locus)]=="+"){
+      data.frame(POS = colnames(prot[[paste0(locus,"_prot")]]), BP = colnames(nuc2dig[[paste0(locus,"_nuc")]])[seq(1,ncol(nuc2dig[[paste0(locus,"_nuc")]])-3,3)])
+    }else{
+      data.frame(POS = colnames(prot[[paste0(locus,"_prot")]])[1:min(ncol(prot[[paste0(locus,"_prot")]]),ceiling(ncol(nuc2dig[[paste0(locus,"_nuc")]])/3))], 
+                 BP = colnames(nuc2dig[[paste0(locus,"_nuc")]])[seq(1,min(ncol(prot[[paste0(locus,"_prot")]]),ceiling(ncol(nuc2dig[[paste0(locus,"_nuc")]])/3))*3,3)])}
+    return(as.character(pos_translation$BP[pos_translation$POS==protpos]))
+    
+  }
 }
 
 ################################
