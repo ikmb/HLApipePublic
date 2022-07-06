@@ -222,7 +222,8 @@ assign.SNP.PROT=function(tmp){
 
   #switch ref and alt allele in multiallelic sites so dosages sum up to 2
   orAllelesREF = data[grepl("or",data[,"ALT"]),]
-  orAllelesREF[,c("REF","ALT")] = c("A","P")#orAllelesREF[,c("ALT","REF")]
+  orAllelesREF[,"REF"] = "A"
+  orAllelesREF[,"ALT"] = "P" #orAllelesREF[,c("ALT","REF")]
   orAllelesREF[,-(1:5)] = 2- as.numeric(orAllelesREF[,-(1:5)])
   data[grepl("or",data[,"ALT"]),] = orAllelesREF
   return(data)
