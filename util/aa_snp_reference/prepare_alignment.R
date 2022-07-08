@@ -9,42 +9,58 @@
 # SETTINGS
 ####################################################
 options(stringsAsFactors=F)
+
 library(readxl)
 
+args = command.args(T)
+
+aa_snp.reference.dir = args[1]
+
+alignment.dir = args[2] ## Download latest alignment form the IDP-IMGT/HLA database
+
+PGF = read_excel(file.path(aa_snp.reference.dir, "PGF.xls"), 1)[1:8,]
+start_end = read.table(file.path(aa_snp.reference.dir,"PGF_start_end.txt"), h=T)
+
+source(file.path(aa_snp.reference.dir,"make_groups.R"))
+groups=out
 ####################################################
 # FUNCTIONS
 ####################################################
 
 prepare = function(file, reference, locus, status.dir=NULL){
-  # ## Optional comment in: Take only alleles with confirmde HLA allele status
-  # if(!is.null(status.dir)){
-  #   conf = read.table(file.path(status.dir,"Allele_status.txt", sep=",", h=T))
-  #   conf = conf[conf$Confirmed=="Confirmed",]
-  # }
+  ## Optional comment in: Take only alleles with confirmed HLA allele status
+  if(!is.null(status.dir)){
+    conf = read.table(file.path(status.dir,"Allele_status.txt", sep=",", h=T))
+    conf = conf[conf$Confirmed=="Confirmed",]
+  }
 
+  ## Prepare for alignment
   cmd=paste("paste <(awk '{print $1}'", file,  
   " ) <(awk '{for (i=2; i<NF; i++) printf $i; print $NF}'", file, 
   ") >", paste0(file,".prep"))
   write.table(cmd, "bash.sh", col.names=F,row.names=F, quote=F)
   system("bash bash.sh")
 
-# READ IN ALIGNMENT FILE
+  ## Read in allignment file
   tmp = read.table(paste0(file, ".prep"), h=F, sep="\t")
-#  tmp = tmp[tmp[,1]%in%conf[,1],]
+  if(!is.null(status.dir)){
+  tmp = tmp[tmp[,1]%in%conf[,1],]}
+    
+  ## Delete empty rows
   ind = grep("[0-9]", tmp[,2])
   if(any(ind)){
     tmp = tmp[-ind,]
   }
   
-  # GET ORDER OF SEQUENCES
+  ## Get the order of sequences
   order = tmp[grep(gsub("\\*","\\\\*", locus), tmp[,1]),1]
 
-  # MAKE MATRIX OF NUC/PROT PER POSITION
+  ##  MAKE MATRIX OF NUC/PROT PER POSITION
   tmp = tapply(tmp[,2], tmp[,1], function(x){do.call(c,strsplit(paste(x, collapse=""),""))})
   names = names(tmp)
   l = unlist(lapply(tmp, length))
   n = max(l)
-  # FILL UP PROT AFTER X
+  ## FILL UP PROT AFTER X
   tmp = lapply(tmp, function(x){if("X"%in%x){x = c(x, rep("*",n-length(x)))};return(x)}) # 
 
   # FILL UP IF ANY LENGTH != maximal length
@@ -52,12 +68,12 @@ prepare = function(file, reference, locus, status.dir=NULL){
   if(length(table(l))!=1){
     tmp = lapply(tmp, function(x){if(length(x)!=n){x = c(x, rep(".",n-length(x)))};return(x)}) 
   }
- # DELETE ROWS THAT DO NOT CONTAIN ALLELES 
+  ## DELETE ROWS THAT DO NOT CONTAIN ALLELES 
   names = names[grep(gsub("\\*","\\\\*", locus), names)]
   tmp = tmp[names]
   tmp = do.call(rbind, tmp)
   print(order[!order%in%names])
-  # ORDER SEQUENCES
+  ## ORDER SEQUENCES
   tmp = tmp[order,]
   
   # FILL UP MATRIX WITH THE FIRST ENTRY
@@ -80,9 +96,9 @@ flip=function(x){
   return(x)
 }
 
-nuc = function(data,locus, strand="+"){
+nuc = function(data,locus, start_end,strand="+"){
   print(locus)
-  start_end=read.table("../PGF_start_end.txt", h=T)
+
   if(locus=="DRB"){locus="DRB1*"}
   start_end = start_end[start_end$allele==locus,]
   bp= c()
@@ -109,23 +125,71 @@ prot= function(data,  reference, string){
   while(sum(ref_string[i:(i+length(string)-1)]==string)!=length(string)){
     i=i+1;
   }
+
   colnames(data)=c(-(i-1):-1, 1:(length(ref_string)-i+1))
   print(dim(data))
+  data[data=="."]="I/D"
 return(data)
 }
    
+## Translate to different resolution or group
+# !!NOTE THAT ONLY PARTIAL SEQUENCES EXIST FOR SOME LOCI
+
+# FOR FULL: Always choose the most complete sequence (usually first sequence)
+translate_to_lower = function(data,group,from,to){
+  group = group[match(rownames(data), paste0(group$locus,"*",group[,from])),c("locus",from,to)]
+  group[,from]=paste0(group[,"locus"],"*", group[,from])
+  group[,to]=paste0(group[,"locus"],"*",group[,to])
+  pos = colnames(data)
+  data = split(data.frame(data), group[,to])
+  a = lapply(data, function(x){
+    if(nrow(x)>1){
+      ind = apply(x,2,function(x){
+        x=x[x!="0"]
+        return(length(table(x))>1)}); x[,ind]="0"; x= x[1,]}
+    return(x)
+  })
+  data = do.call(rbind, a)
+  colnames(data) = pos
+  
+  return(data)
+}
+
+# FOR G: Always choose the most complete sequence (usually first sequence)
+translate_to_g = function(data,group,from,to){
+  group = group[match(rownames(data), paste0(group$locus,"*",group[,from])),c("locus",from,to)]
+  group[,from]=paste0(group[,"locus"],"*", group[,from])
+  group[,to]=paste0(group[,"locus"],"*",group[,to])
+  pos = colnames(data)
+  data = split(data.frame(data), group[,to])
+  a = lapply(data, function(x){
+    if(nrow(x)>1){
+      ind = apply(x,2,function(x){
+        return(length(table(x))>1)}); x[,ind]="0"; x= unique(x)}
+    return(x)
+  })
+  data = do.call(rbind, a)
+  colnames(data) = pos
+  ind = apply(data,2,function(x){sum=length(x); x=length(which(x=="0"))/sum;} )
+  data = data[,ind< 0.05]
+  return(data)
+}
+
+
+plotfunction = function(data, title){
+  pdf(paste0(title, ".pdf"))
+  for(i in names(data)){
+    ind = apply(data[[i]],2,function(x){sum=length(x); x=length(which(x=="0"))/sum;} )
+    plot(names(ind), ind*100, xlab="position", ylab="% missing", main = paste0(i) )
+  }
+  dev.off()
+}
 
 ####################################################
-# MAIN
+# MAIN: Create libraries
 ####################################################
-args = command.args(T)
-
-pgf.reference.dir = args[1]
-alignment.dir = args[2]
 
 
-# PGF REFERENCE ASSIGNMENTS, start (i.e. where is start of sequence);STRINGS and strands 
-PGF=read_excel(pgf.reference.dir, "PGF.xls", 1)[1:8,]
 strings =c("GSHSMRYFFT","GSHSMRYFYT","CSHSMRYFDT","IKADHVSTYA",
            "RATPENYLFQ","EDIVADHVAS","RDSPEDFVFQ","GDTRPRFLWQ")
 
@@ -139,11 +203,13 @@ for(i in (1:nrow(PGF))){
   if(i==8){locus="DRB"}
   reference = paste0(PGF[i,1], PGF[i,2])
   for(suffix in c("nuc","prot")){
-    # READ IN ALIGNMENT
+    
+    # read in alignment
     file = file.path(alignment.dir, paste(gsub("\\*", "", locus),"_",suffix,".txt",sep=""))
     out = prepare(file, reference, locus)
     names = rownames(out)
     
+    ## prepare nucleotide library
     if(suffix=="nuc"){
       b = sapply(strsplit(names,":"), 
                  function(x){
@@ -154,11 +220,13 @@ for(i in (1:nrow(PGF))){
       ind = !duplicated(b)
       out = out[ind,]
       rownames(out) = b[ind]
-      data = nuc(out,locus, strand = strand[i])
+      data = nuc(out,locus, start_end, strand = strand[i])
       data = data[,as.numeric(colnames(data))>29*10^6 & as.numeric(colnames(data))<35*10^6]
       print(dim(data))
       list_nuc[[paste(sub("\\*", "", locus),"_",suffix,sep="")]]= data
     } 
+    
+    ## prepare protein library
     if(suffix=="prot"){
       b = sapply(strsplit(names,":"), 
                  function(x){
@@ -177,128 +245,66 @@ for(i in (1:nrow(PGF))){
   }
 }
 
+###############################################################################
+# MAIN: Modify libraries
+################################################################################
 
+## full context
 prot = list_prot
 nuc3dig = list_nuc
-
-pdf("analysis_missingness_prot_full.pdf") 
-for(i in names(prot)){
-  ind = apply(prot[[i]],2,function(x){sum=length(x); x=length(which(x=="0"))/sum;} )
-  plot(names(ind), ind*100, xlab="position", ylab="% missing", main = paste0(i) )
-}
-dev.off()
-
-pdf("analysis_missingness_nuc3dig_full.pdf") 
-for(i in names(nuc3dig)){
-ind = apply(nuc3dig[[i]],2,function(x){sum=length(x); x=length(which(x=="0"))/sum;} )
-plot(as.numeric(names(ind)), ind*100, xlab="position", ylab="% missing", main = paste0(i) )
-}
-dev.off()
-
-
-# !!NOTE THAT ONLY PARTIAL SEQUENCES EXIST FOR SOME LOCI
-source("../../scripts/make_groups.R")
-# FOR FULL: Always choose the most complete sequence (usually first sequence)
-translate_to_lower = function(data,group,from,to){
-  group = group[match(rownames(data), paste0(group$locus,"*",group[,from])),c("locus",from,to)]
-  group[,from]=paste0(group[,"locus"],"*", group[,from])
-  group[,to]=paste0(group[,"locus"],"*",group[,to])
-  pos = colnames(data)
-  data = split(data.frame(data), group[,to])
- a = lapply(data, function(x){
-   if(nrow(x)>1){
-     ind = apply(x,2,function(x){
-       x=x[x!="0"]
-       return(length(table(x))>1)}); x[,ind]="0"; x= x[1,]}
-   return(x)
-   })
- data = do.call(rbind, a)
- colnames(data) = pos
- 
- ind = apply(data,2,function(x){sum=length(x); x=length(which(x=="0"))/sum;} )
- #PLOT
-
- plot(names(ind), ind*100, xlab="position", ylab="% missing" )
-
- return(data)
-}
-
-# FOR G: Always choose the most complete sequence (usually first sequence)
-translate_to_g = function(data,group,from,to){
-  group = group[match(rownames(data), paste0(group$locus,"*",group[,from])),c("locus",from,to)]
-  group[,from]=paste0(group[,"locus"],"*", group[,from])
-  group[,to]=paste0(group[,"locus"],"*",group[,to])
-  pos = colnames(data)
-  data = split(data.frame(data), group[,to])
-  a = lapply(data, function(x){
-    if(nrow(x)>1){
-      ind = apply(x,2,function(x){
-        return(length(table(x))>1)}); x[,ind]="0"; x= unique(x)}
-    return(x)
-  })
-  
-  data = do.call(rbind, a)
-  colnames(data) = pos
-  #PLOT
-  ind = apply(data,2,function(x){sum=length(x); x=length(which(x=="0"))/sum;} )
-
-  plot(names(ind), ind*100, xlab="position", ylab="% missing" )
-  
-
-  data = data[,ind< 0.05]
-  return(data)
-}
-
-load("g_groups.RData")
-
-pdf("analysis_missingness_nuc_full_2dig.pdf") 
-nuc2dig = lapply(list_nuc, function(data){print(head(data[,1:10])); translate_to_lower(data,out,"X3field","X2field")})
-dev.off()
-
+nuc2dig = lapply(list_nuc, function(data){print(head(data[,1:10])); translate_to_lower(data,groups,"X3field","X2field")})
 save(nuc3dig,nuc2dig,prot,file="impute_SNPs_AA_full.RData")
-####### TRANSLATE TO G GROUPS
-pdf("analysis_missingness_nuc_3digG.pdf") 
-nuc3dig =  lapply(list_nuc, function(data){translate_to_g(data,out,"X3field","X3Gfield")})
-dev.off()
-pdf("analysis_missingness_nuc_2digG.pdf") 
-nuc2dig = lapply(list_nuc, function(data){translate_to_g(data,out,"X3field","X2Gfield")})
-dev.off()
-pdf("analysis_missingness_prot_protG.pdf") 
-prot = lapply(prot, function(data){translate_to_g(data,out,"X2field","X2Gfield")})
-dev.off()
+
+plotfunction(prot, "prot")
+plotfunction(nuc3dig, "nuc3dig")
+plotfunction(nuc2dig, "nuc2dig")
+
+## g groups
+load("g_groups.RData")
+nuc3dig =  lapply(list_nuc, function(data){translate_to_g(data,groups,"X3field","X3Gfield")})
+nuc2dig = lapply(list_nuc, function(data){translate_to_g(data,groups,"X3field","X2Gfield")})
+prot = lapply(prot, function(data){translate_to_g(data,groups,"X2field","X2Gfield")})
+
+
+plotfunction(prot, "protG")
+plotfunction(nuc3dig, "nuc3digG")
+plotfunction(nuc2dig, "nuc2digG")
 
 save(nuc3dig,nuc2dig,prot,file="impute_SNPs_AA_G.RData")
 
-# ### OLD
-# # lengths = c()
-# # 
-# # 
-# # for(i in seq(1,16,2)){
-# #   tmp = info[[i]]
-# #   print(i)
-# #   check = apply(tmp,2,function(x){x[x=="0"]=NA; return(table(as.character(x)))})
-# #   lengths = rbind(lengths,
-# #                   cbind(names(info)[i],unlist(lapply(check,length)),
-# #                   unlist(lapply(check, function(x){paste(names(x),collapse=",")}))))
-# # }
-# # lengths=data.frame(lengths)
-# # indel = lengths[grep("I", rownames(lengths)),]
-# # # lengths = lengths[as.numeric(lengths[,2])>2,]
-# # # mult=read.table("chr6_29_34_out.txt",h=F)
-# # # mult = mult[match(rownames(lengths),mult[,1]),]
-# # # lengths = cbind(lengths,as.matrix(mult[,2]))
-# # colnames(lengths)=c("loc", "no.alleles","alleles")
-# # 
-# # options(stringsAsFactors=F)
-# # mult=read.table("../UCSC_SNP_150_out.txt",h=T, sep="\t")
-# # mult[mult$strand=="-","observed"]=sapply(mult[mult$strand=="-","observed"], function(x){chartr("ATCG/","TAGC/", x)})
-# # mult= tapply(mult$observed,mult$chromEnd, function(x){paste(x,collapse=",")})
-# # mult = mult[match(rownames(lengths),paste0("X",names(mult)))]
-# # lengths$known_in_UCSC = mult
-# # lengths = lengths[!is.na(lengths[,4]),]
-# # # write.table(lengths, "multallelic_variants_HLA_reference.csv", row.names=T, col.names=T,quote=T,sep="\t")
-# # # 
-# # # 
+# 
+# ### Sanity check
+# info = nuc2dig
+# lengths = c()
+# for(i in 1:8){
+#   tmp = info[[i]]
+#   tmp = tmp[1:ceiling(length(tmp)/2),]
+#   check = apply(tmp,2,function(x){x[x=="0"]=NA; return(table(as.character(x)))})
+#   lengths = rbind(lengths,
+#                   cbind(names(info)[i],unlist(lapply(check,length)),
+#                         unlist(lapply(check, function(x){paste(names(x),collapse=",")}))))
+# }
+# 
+# lengths=data.frame(lengths)
+# indel = lengths[grep("I", rownames(lengths)),]
+# lengths = lengths[as.numeric(lengths[,2])>2,]
+# colnames(lengths)=c("loc", "no.alleles","alleles")
+# lengths = data.frame(cbind(pos=rownames(lengths), lengths))
+# lengths$alleles=unlist(lapply(strsplit(as.character(lengths$alleles),","), function(x){x=gsub("I/D|D/I","-", x); x=paste(unique(sort(x)), collapse=",")}))
+# library(data.table)
+# mult=fread("hgTables_snpdb150.txt", h=T,sep="\t")
+# mult[mult$strand=="-","observed"]=sapply(mult[mult$strand=="-","observed"], function(x){chartr("ATCG/","TAGC/", x)})
+# mult= tapply(mult$observed,mult$chromEnd, function(x){paste(x,collapse="/")})
+# 
+# mult = mult[match(lengths$pos,paste0(names(mult)))]
+# mult = unlist(lapply(strsplit(mult,"/"), function(x){sort(x); paste(unique(sort(x)), collapse=",")}))
 # 
 # 
-# 
+# lengths$known_in_UCSC = mult
+# lengths = lengths[!is.na(lengths$known_in_UCSC) &!lengths$known_in_UCSC=="",]
+# table(lengths$alleles==lengths$known_in_UCSC)
+# write.table(lengths, "multallelic_variants_HLA_reference.csv", row.names=T, col.names=T,quote=T,sep="\t")
+
+
+
+
