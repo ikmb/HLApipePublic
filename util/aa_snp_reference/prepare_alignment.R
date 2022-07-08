@@ -8,11 +8,6 @@
 ###################################################
 # SETTINGS
 ####################################################
-args = commandArgs(T)
-util.dir=args[1]
-alignments.dir=args[2]
-script.dir=args[3]
-
 options(stringsAsFactors=F)
 library(readxl)
 
@@ -20,32 +15,27 @@ library(readxl)
 # FUNCTIONS
 ####################################################
 
-
-prepare = function(file, reference, locus){
-# file: alignment file
-# reference: reference string
-# locus: HLA locus 
-
-## READ IN ALLELE STATUS (uncomment next line if you only want to include
-## confirmed alleles
-
- conf = read.table(file.path(dir, "Allele_status.txt"), sep=",", h=T)
-# conf = conf[conf$Confirmed=="Confirmed",]
+prepare = function(file, reference, locus, status.dir=NULL){
+  # ## Optional comment in: Take only alleles with confirmde HLA allele status
+  # if(!is.null(status.dir)){
+  #   conf = read.table(file.path(status.dir,"Allele_status.txt", sep=",", h=T))
+  #   conf = conf[conf$Confirmed=="Confirmed",]
+  # }
 
   cmd=paste("paste <(awk '{print $1}'", file,  
   " ) <(awk '{for (i=2; i<NF; i++) printf $i; print $NF}'", file, 
   ") >", paste0(file,".prep"))
   write.table(cmd, "bash.sh", col.names=F,row.names=F, quote=F)
   system("bash bash.sh")
-  
 
 # READ IN ALIGNMENT FILE
   tmp = read.table(paste0(file, ".prep"), h=F, sep="\t")
-  tmp = tmp[tmp[,1]%in%conf[,1],]
+#  tmp = tmp[tmp[,1]%in%conf[,1],]
   ind = grep("[0-9]", tmp[,2])
   if(any(ind)){
     tmp = tmp[-ind,]
   }
+  
   # GET ORDER OF SEQUENCES
   order = tmp[grep(gsub("\\*","\\\\*", locus), tmp[,1]),1]
 
@@ -54,7 +44,6 @@ prepare = function(file, reference, locus){
   names = names(tmp)
   l = unlist(lapply(tmp, length))
   n = max(l)
-
   # FILL UP PROT AFTER X
   tmp = lapply(tmp, function(x){if("X"%in%x){x = c(x, rep("*",n-length(x)))};return(x)}) # 
 
@@ -90,10 +79,10 @@ flip=function(x){
   x=unlist(sapply(x,function(x){x=switch(x,A="T",T="A",C="G",G="C","0"="0","."="."); return(as.character(x))}))
   return(x)
 }
-## ASSIGN POSITIONS TO NUCLEOTIDES
+
 nuc = function(data,locus, strand="+"){
   print(locus)
-  start_end=read.table(file.path(util.dir, "PGF_start_end.txt"), h=T)
+  start_end=read.table("../PGF_start_end.txt", h=T)
   if(locus=="DRB"){locus="DRB1*"}
   start_end = start_end[start_end$allele==locus,]
   bp= c()
@@ -110,7 +99,7 @@ nuc = function(data,locus, strand="+"){
   return(data)
 }
 
-## ASSIGN POSITIONS TO AMINO ACIDS
+
 prot= function(data,  reference, string){
   string = unlist(strsplit(string,""))
   print(string)
@@ -129,9 +118,14 @@ return(data)
 ####################################################
 # MAIN
 ####################################################
+args = command.args(T)
+
+pgf.reference.dir = args[1]
+alignment.dir = args[2]
+
 
 # PGF REFERENCE ASSIGNMENTS, start (i.e. where is start of sequence);STRINGS and strands 
-PGF=read_excel(file.path(util.dir, "TE_PGF.xls"), 1)[1:8,]
+PGF=read_excel(pgf.reference.dir, "PGF.xls", 1)[1:8,]
 strings =c("GSHSMRYFFT","GSHSMRYFYT","CSHSMRYFDT","IKADHVSTYA",
            "RATPENYLFQ","EDIVADHVAS","RDSPEDFVFQ","GDTRPRFLWQ")
 
@@ -146,8 +140,7 @@ for(i in (1:nrow(PGF))){
   reference = paste0(PGF[i,1], PGF[i,2])
   for(suffix in c("nuc","prot")){
     # READ IN ALIGNMENT
-    file = file.path(alignments.dir, "alignments", paste(gsub("\\*", "", locus),"_",suffix,".txt",sep=""))
-    print(file)
+    file = file.path(alignment.dir, paste(gsub("\\*", "", locus),"_",suffix,".txt",sep=""))
     out = prepare(file, reference, locus)
     names = rownames(out)
     
@@ -204,7 +197,7 @@ dev.off()
 
 
 # !!NOTE THAT ONLY PARTIAL SEQUENCES EXIST FOR SOME LOCI
-source(file.path(script.dir, "make_groups.R"))
+source("../../scripts/make_groups.R")
 # FOR FULL: Always choose the most complete sequence (usually first sequence)
 translate_to_lower = function(data,group,from,to){
   group = group[match(rownames(data), paste0(group$locus,"*",group[,from])),c("locus",from,to)]
@@ -248,7 +241,10 @@ translate_to_g = function(data,group,from,to){
   colnames(data) = pos
   #PLOT
   ind = apply(data,2,function(x){sum=length(x); x=length(which(x=="0"))/sum;} )
+
   plot(names(ind), ind*100, xlab="position", ylab="% missing" )
+  
+
   data = data[,ind< 0.05]
   return(data)
 }
@@ -260,7 +256,6 @@ nuc2dig = lapply(list_nuc, function(data){print(head(data[,1:10])); translate_to
 dev.off()
 
 save(nuc3dig,nuc2dig,prot,file="impute_SNPs_AA_full.RData")
-
 ####### TRANSLATE TO G GROUPS
 pdf("analysis_missingness_nuc_3digG.pdf") 
 nuc3dig =  lapply(list_nuc, function(data){translate_to_g(data,out,"X3field","X3Gfield")})
@@ -274,3 +269,36 @@ dev.off()
 
 save(nuc3dig,nuc2dig,prot,file="impute_SNPs_AA_G.RData")
 
+# ### OLD
+# # lengths = c()
+# # 
+# # 
+# # for(i in seq(1,16,2)){
+# #   tmp = info[[i]]
+# #   print(i)
+# #   check = apply(tmp,2,function(x){x[x=="0"]=NA; return(table(as.character(x)))})
+# #   lengths = rbind(lengths,
+# #                   cbind(names(info)[i],unlist(lapply(check,length)),
+# #                   unlist(lapply(check, function(x){paste(names(x),collapse=",")}))))
+# # }
+# # lengths=data.frame(lengths)
+# # indel = lengths[grep("I", rownames(lengths)),]
+# # # lengths = lengths[as.numeric(lengths[,2])>2,]
+# # # mult=read.table("chr6_29_34_out.txt",h=F)
+# # # mult = mult[match(rownames(lengths),mult[,1]),]
+# # # lengths = cbind(lengths,as.matrix(mult[,2]))
+# # colnames(lengths)=c("loc", "no.alleles","alleles")
+# # 
+# # options(stringsAsFactors=F)
+# # mult=read.table("../UCSC_SNP_150_out.txt",h=T, sep="\t")
+# # mult[mult$strand=="-","observed"]=sapply(mult[mult$strand=="-","observed"], function(x){chartr("ATCG/","TAGC/", x)})
+# # mult= tapply(mult$observed,mult$chromEnd, function(x){paste(x,collapse=",")})
+# # mult = mult[match(rownames(lengths),paste0("X",names(mult)))]
+# # lengths$known_in_UCSC = mult
+# # lengths = lengths[!is.na(lengths[,4]),]
+# # # write.table(lengths, "multallelic_variants_HLA_reference.csv", row.names=T, col.names=T,quote=T,sep="\t")
+# # # 
+# # # 
+# 
+# 
+# 
