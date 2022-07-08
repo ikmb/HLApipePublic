@@ -22,8 +22,9 @@ Utility:
 - Calculation of alleles that are difficult to phase given your input data
 
 Additional code includes: 
-- Preparation of SNP/AA database from IMGT
+- Preparation of SNP/AA database from the IDP-IMGT/HLA database  [https://www.ebi.ac.uk/ipd/imgt/hla/]
 
+IMPORTANT NOTE: The reference for amino acids and nucleotids always is built from the longest nucleotide or amino acid sequence present for an HLA allele across the 2-,3- and 4-fields present in the alignments of the IDP-IMGT/HLA database.
 
 ## Dependencies 
 
