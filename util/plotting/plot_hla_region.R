@@ -58,8 +58,11 @@ print(head(stats))
 print(quantile(-log10(stats$P)))
 
 
-## Get only more frequent data
-stats = stats[stats$AF_ALL > 0.01 & stats$AF_ALL < 0.99,]
+if("AF_ALL"%in%colnames(stats)){
+  ## Get only more frequent data
+  stats = stats[stats$AF_ALL > 0.01 & stats$AF_ALL < 0.99,]
+}
+
 
 if(length(args)>2){
   info = info[match(stats$SNPID, info$SNPID),]
@@ -71,7 +74,7 @@ cex=2
 # PLOT
 ########################################
 
-png(file.path("result.png"),width=1180,height=420)
+png(paste0(args[1],".png"),width=1180,height=420)
 par(lwd=3)
 par(fig= c(0,1,0.85,1), mar=c(0,5.1,4.1,5.5) )
 plot(1, xlab="", xlim=c(29,34), col="transparent", xaxt="n", ylab="", yaxt="n")

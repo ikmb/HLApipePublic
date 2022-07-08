@@ -1,6 +1,6 @@
 options(stringsAsFactors=F)
-tmp = read.table(file.path(dir, "hla_nom_g.txt"), h=F)
-
+tmp = read.table("hla_nom_g.txt", h=F)
+tmp = read.table("hla_nom_g.txt", h=F)
 # FORMAT LOCUS ALLELES GROUP
 tmp = do.call(rbind,lapply(strsplit(tmp$V1,";"), 
                            function(x){if(length(x)==2){
