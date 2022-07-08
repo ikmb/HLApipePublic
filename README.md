@@ -16,12 +16,13 @@ Main:
 - HLA, Amino acid (AA) & SNP imputation (Note that DRB3/4/5 positions were mapped to DRB1 for sake of simplicity; the last 3 AA of DRB1/3/4/5 and DQB1 are mapped to position 0, they are not present in the nucleotide reference of the genes)
 - Phasing of HLA alleles
 
-Utility: 
+
+Other: 
 - Calculation of marginal probabilitites per allele of imputation results
 - Calculation of alleles that have similar SNP haplotypes given the positions in your input data
 - Calculation of alleles that are difficult to phase given your input data
 
-Additional code includes: 
+Utility code includes (folder: utility): 
 - Preparation of SNP/AA database from the IDP-IMGT/HLA database  [https://www.ebi.ac.uk/ipd/imgt/hla/]
 - Plotting of results from an HLA analysis including SNPs (it is recommended that association results of SNPs from the HLA region, i.e. from TopMed imputation are merged to association results from HLA allele association)
 
