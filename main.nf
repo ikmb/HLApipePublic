@@ -198,7 +198,7 @@ Channel.fromPath("${params.prefix}.{bed,bim,fam}")
 process readData {
 
 //	publishDir "${params.outdir}/preprocess", mode: 'copy'
-
+	scratch params.scratch
 	input:
 	set file(bed),file(bim),file(fam) from inputFiles
 
@@ -237,7 +237,7 @@ process readData {
 if (params.do_beagle) {
 
 	process runBeagle {
-
+		scratch params.scratch
 //		publishDir "${params.outdir}/Beagle", mode: 'copy'
 
 		input:
@@ -270,15 +270,15 @@ if (params.do_beagle) {
 
 
 process alignToReference {
-
+	scratch params.scratch
 	publishDir "${params.outdir}/alignToReference", mode: 'copy', pattern: '*summary*'
 
-        input:
+    input:
         set file(bed),file(bim),file(fam) from bimbedfam_beagle
         val(base_name) from baseName
 	val(basenameRunname) from basenameRunname
 
-        output:
+    output:
         file(out)
         set file(bed_mod),file(bim_mod),file(fam_mod) into (bimbedfam_impute, bimbedfam_impcombine, bimbedfam_phasecombine)
         val(base_checked) into checkedName
@@ -301,7 +301,7 @@ process alignToReference {
 
         }
         """
-                alignToReference.R $MODEL_NAME $base_name ${options}
+        Rscript ${baseDir}/bin/alignToReference.R $MODEL_NAME $base_name ${options}
 		mv "refchecked_A.pdf" $refA
 		mv "refchecked_B.pdf" $refB
 		mv "report.refchecked.txt" $ref
@@ -313,7 +313,7 @@ process alignToReference {
 // This process performs HLA imputation
 // **********
 process imputeHLA {
-
+	scratch params.scratch
 	input:
 	set file(bed),file(bim),file(fam) from bimbedfam_impute
 	each locus from LOCI
@@ -329,8 +329,8 @@ process imputeHLA {
 	same_result = locus + "_" + checked_name + ".txt"
 
 	"""
-		imputeHLA.R $checked_name $MODEL_NAME $locus 
-                imputeHLAhaplo.R $locus $MODEL_NAME $checked_name $checked_name
+		Rscript ${baseDir}/bin/imputeHLA.R $checked_name $MODEL_NAME $locus 
+        Rscript ${baseDir}/bin/imputeHLAhaplo.R $locus $MODEL_NAME $checked_name $checked_name
 	"""
 }
 
@@ -338,7 +338,7 @@ process imputeHLA {
 // This process combines all HLA loci after imputation
 // **********
 process imputeHLACombine {
-
+	scratch params.scratch
 	publishDir "${params.outdir}/imputeHLACombine", mode: 'copy', pattern: 'imputation*'
 	
 	input:
@@ -367,9 +367,9 @@ process imputeHLACombine {
 	postprob_pdf = "postprob_" + basenameRunname +".pdf"
 	unsure_pdf = "unsure_" + basenameRunname + ".pdf"
 	"""
-           	imputeHLACombineRData.R $singles $checked_name $params.supplementary_dir/location_HLA_genes_hg19.txt $DICTIONARY
-		imputeHLACombineCSV.R $singles $checked_name
-		imputeHLACombinePLINK.R $checked_name $params.bin_dir/utilityFUNCTIONS.R
+        Rscript ${baseDir}/bin/imputeHLACombineRData.R $singles $checked_name $params.supplementary_dir/location_HLA_genes_hg19.txt $DICTIONARY
+		Rscript ${baseDir}/bin/imputeHLACombineCSV.R $singles $checked_name
+		Rscript ${baseDir}/bin/imputeHLACombinePLINK.R $checked_name $params.bin_dir/utilityFUNCTIONS.R
                 
 		cat $singles_same > tmp.txt
                 cat <(head -1 tmp.txt) <(grep -v gene tmp.txt) > $same_result
@@ -388,6 +388,7 @@ process imputeHLACombine {
 // **********
 process phaseSNPs {
 
+	scratch params.scratch
 //	publishDir "${params.outdir}/phasedSNPs", mode: 'copy'
         errorStrategy 'ignore' 
 	input:
@@ -423,6 +424,7 @@ process phaseSNPs {
 
 process phaseHLA {
 
+	scratch params.scratch
 	input:
         each name from phased_name.collect()        
 //	set file(haps), file(sample), file(certainty) from phased
@@ -444,7 +446,7 @@ process phaseHLA {
         certainty = name + ".certainty.all"
 	"""
                   
-		phaseHLA.R $checked_name $imputed $haps $sample $certainty $MODEL_NAME $locus
+		Rscript ${baseDir}/bin/phaseHLA.R $checked_name $imputed $haps $sample $certainty $MODEL_NAME $locus
 	"""
 }
 
@@ -455,6 +457,7 @@ process phaseHLA {
 
 process phaseHLACombine {
 
+	scratch params.scratch
 	publishDir "${params.outdir}/phaseHLAcombine", mode: 'copy', pattern: 'imputation*'
 
 	input:
@@ -481,11 +484,11 @@ process phaseHLACombine {
         bed =  "imputation_" + checked_name + ".haplotypes.bed"
         fam =  "imputation_" + checked_name + ".haplotypes.fam"
 	"""
-		phaseHLACombineMETA.R ${singles} $phased_result
-		phaseHLACombineRData.R $checked_name
-		phaseHLACombinePLINK.R $checked_name $params.bin_dir/utilityFUNCTIONS.R
-                phaseHLACombineCSV.R $data $phased_comb
-                phaseHLACombineINFO.R $checked_name $data $params.bin_dir/utilityFUNCTIONS.R
+		Rscript ${baseDir}/bin/phaseHLACombineMETA.R ${singles} $phased_result
+		Rscript ${baseDir}/bin/phaseHLACombineRData.R $checked_name
+		Rscript ${baseDir}/bin/phaseHLACombinePLINK.R $checked_name $params.bin_dir/utilityFUNCTIONS.R
+        Rscript ${baseDir}/bin/phaseHLACombineCSV.R $data $phased_comb
+        Rscript ${baseDir}/bin/phaseHLACombineINFO.R $checked_name $data $params.bin_dir/utilityFUNCTIONS.R
 		mv "phased.pdf" $phased_pdf
 	"""
 }
@@ -497,6 +500,8 @@ process phaseHLACombine {
 // **********
 
 process report {
+
+	scratch params.scratch
     publishDir "${params.outdir}", mode: 'copy'
     
     input:
@@ -515,7 +520,7 @@ process report {
     rootname = bed.getBaseName()
     output =  "report_" + basenameRunname +  ".html"
     """
-	plink --bfile $rootname --missing --out $rootname
+		plink --bfile $rootname --missing --out $rootname
         cp -r ${params.tex_dir}/* .
         R -e 'rmarkdown::render("report.Rmd", output_file="${output}", params = list(rootname="${rootname}", checked_name="${checked_name}",  pop="${params.subpop}", model="${MODEL_NAME}", shapeit="${params.shapeit}", modules="${LOADEDMODULES}", basenamerunname="${basenameRunname}"))'
     """

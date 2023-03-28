@@ -6,7 +6,6 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - r
   - r-base
   - r-reshape
   - r-reshape2
