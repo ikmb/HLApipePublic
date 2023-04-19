@@ -11,8 +11,8 @@
 options(stringsAsFactors=F)
 
 library(readxl)
-
-args = command.args(T)
+library(data.table)
+args = commandArgs(T)
 
 aa_snp.reference.dir = args[1]
 
@@ -21,10 +21,11 @@ alignment.dir = args[2] ## Download latest alignment form the IDP-IMGT/HLA datab
 PGF = read_excel(file.path(aa_snp.reference.dir, "PGF.xls"), 1)[1:8,]
 start_end = read.table(file.path(aa_snp.reference.dir,"PGF_start_end.txt"), h=T)
 
-source(file.path(aa_snp.reference.dir,"make_groups.R"))
+source(file.path(aa_snp.reference.dir,"make_groups.R")) ## Download hla_nom_g.txt from hlaalleles.org
 groups=out
 ####################################################
 # FUNCTIONS
+# . = indel ; * = "missing"
 ####################################################
 
 prepare = function(file, reference, locus, status.dir=NULL){
@@ -34,6 +35,7 @@ prepare = function(file, reference, locus, status.dir=NULL){
     conf = conf[conf$Confirmed=="Confirmed",]
   }
 
+  print(paste("Read file", file,"...."))
   ## Prepare for alignment
   cmd=paste("paste <(awk '{print $1}'", file,  
   " ) <(awk '{for (i=2; i<NF; i++) printf $i; print $NF}'", file, 
@@ -60,11 +62,14 @@ prepare = function(file, reference, locus, status.dir=NULL){
   names = names(tmp)
   l = unlist(lapply(tmp, length))
   n = max(l)
+
   ## FILL UP PROT AFTER X
-  tmp = lapply(tmp, function(x){if("X"%in%x){x = c(x, rep("*",n-length(x)))};return(x)}) # 
+  tmp = lapply(tmp, function(x){if("X"%in%x){x = c(x, rep("X",n-length(x)))};return(x)}) # 
 
   # FILL UP IF ANY LENGTH != maximal length
   l = unlist(lapply(tmp, length))
+
+  
   if(length(table(l))!=1){
     tmp = lapply(tmp, function(x){if(length(x)!=n){x = c(x, rep(".",n-length(x)))};return(x)}) 
   }
@@ -74,31 +79,69 @@ prepare = function(file, reference, locus, status.dir=NULL){
   tmp = do.call(rbind, tmp)
   print(order[!order%in%names])
   ## ORDER SEQUENCES
-  tmp = tmp[order,]
+  tmp = tmp[unique(order),]
   
   # FILL UP MATRIX WITH THE FIRST ENTRY
   tmp = apply(tmp,2, function(x){x = gsub("-",x[1],x); x = gsub("\\*","0",x); return(x)})
   names(tmp) = names
   
-  print(paste("Read file", file,"...."))
+  
   print(paste("Reference is", reference))
   
-  # REDUCE MATRIX TO POSITIONS OF REFERENCE STRING
+  # Delete separator "|"
   ref_string = tmp[reference, ]
-  ind = ref_string=="." |ref_string=="|"
+  
+  ind = ref_string=="|"
   tmp = tmp[,!ind]
 
+  ## Get insertions respective to the reference string
+  ref_string = tmp[reference, ]
+  ind = which(ref_string=="." | ref_string=="0")
+  print(table(ref_string))
+  # prepare blocks
+  partitions = list()
+  seq = c()
+  if(any(ind)){
+  for(i in 1:(length(ind)-1)){
+    if(ind[i+1] == ind[i]+1){
+      seq = c(seq, ind[i], ind[i+1])
+    }else{
+      seq = unique(seq)
+      if(length(seq)==0){
+        seq = ind[i]
+      }
+      partitions=c(partitions, list(c(seq)))
+      seq = c()
+    }
+  }
+  if(length(seq)==0){
+    seq = ind[i+1]
+  }
+  
+  partitions=c(partitions, list(c(unique(seq))))
+  partitions = lapply(partitions, function(x){x=c(x[1]-1,x)})
+  names(partitions) = unlist(lapply(partitions, function(x){x[1]}))
+  partitions = lapply(partitions, function(x){x = tmp[,x]; x=apply(x, 1, function(x){x=paste(gsub("\\.","", x),collapse="");
+  x=gsub("XX.*","X",x);  x=gsub("XX.*","X",x); x[x==""]="."; return(x)})})
+  
+  ## Replace position
+  for(i in names(partitions)){
+    tmp[,as.numeric(i)]=partitions[[i]]
+  }
+
+  tmp = tmp[,-ind]}
   return(tmp)
 }
 
 flip=function(x){
-  x=unlist(sapply(x,function(x){x=switch(x,A="T",T="A",C="G",G="C","0"="0","."="."); return(as.character(x))}))
-  return(x)
+  x=unlist(sapply(x,function(x){
+    x=chartr("ACGT", "TGCA",x)
+  return(x)}))
 }
 
 nuc = function(data,locus, start_end,strand="+"){
   print(locus)
-
+  
   if(locus=="DRB"){locus="DRB1*"}
   start_end = start_end[start_end$allele==locus,]
   bp= c()
@@ -106,12 +149,16 @@ nuc = function(data,locus, start_end,strand="+"){
     bp = c(bp, start_end[i,"start"]:start_end[i,"end"])
   }
   colnames(data)=bp
+
   # FLIP ALLELES THAT ARE ON THE - STRAND
   if(strand=="-"){
+    print(table(data[,100]))
     data = apply(data,2,flip)
+    print(table(data[,100]))
   }
-  data[data=="."]="I/D"
-  print(dim(data))
+
+  data[data=="."]="-"
+
   return(data)
 }
 
@@ -128,7 +175,7 @@ prot= function(data,  reference, string){
 
   colnames(data)=c(-(i-1):-1, 1:(length(ref_string)-i+1))
   print(dim(data))
-  data[data=="."]="I/D"
+  data[data=="."]="-"
 return(data)
 }
    
@@ -222,7 +269,7 @@ for(i in (1:nrow(PGF))){
       rownames(out) = b[ind]
       data = nuc(out,locus, start_end, strand = strand[i])
       data = data[,as.numeric(colnames(data))>29*10^6 & as.numeric(colnames(data))<35*10^6]
-      print(dim(data))
+  
       list_nuc[[paste(sub("\\*", "", locus),"_",suffix,sep="")]]= data
     } 
     
@@ -252,7 +299,7 @@ for(i in (1:nrow(PGF))){
 ## full context
 prot = list_prot
 nuc3dig = list_nuc
-nuc2dig = lapply(list_nuc, function(data){print(head(data[,1:10])); translate_to_lower(data,groups,"X3field","X2field")})
+nuc2dig = lapply(list_nuc, function(data){translate_to_lower(data,groups,"X3field","X2field")})
 save(nuc3dig,nuc2dig,prot,file="impute_SNPs_AA_full.RData")
 
 plotfunction(prot, "prot")
